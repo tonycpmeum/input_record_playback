@@ -10,12 +10,32 @@ class CustomListView(Widget.QListView):
       self.setEditTriggers(Widget.QAbstractItemView.DoubleClicked | Widget.QAbstractItemView.EditKeyPressed)
 
 class CustomModel(Core.QAbstractListModel):
-   rowCountChanged = Core.Signal()
-   
    def __init__(self):
       super().__init__()
       self.file_path = "./data/script_data.json"
       self.script_data = self._load_script_data()
+
+   @Core.Slot(list)
+   def add_script(self, new_script):
+      position = len(self.script_data) # insert at end
+      self.beginInsertRows(Core.QModelIndex(), position, position)
+      new_item = {f"script_{len(self.script_data) + 1}": new_script}
+      self.script_data.append(new_item)
+      self._save_script_data()
+      self.endInsertRows()
+
+   def remove_script(self, position: int):
+      if position < 0 or position > len(self.script_data): return
+      self.beginRemoveRows(Core.QModelIndex(), position, position)
+      self.script_data.pop(position)
+      self._save_script_data()
+      self.endRemoveRows()
+   
+   def get_script_events(self, index):
+      if 0 <= index < len(self.script_data):
+         selected_script = self.script_data[index]
+         return next(iter(selected_script.values()))
+      return None
    
    def _load_script_data(self) -> list:
       directory = os.path.dirname(self.file_path)
@@ -45,30 +65,8 @@ class CustomModel(Core.QAbstractListModel):
       with open(self.file_path, 'w') as f:
          json.dump(self.script_data, f, indent=3)
 
-   def add_script(self, new_script):
-      position = len(self.script_data)
-      self.beginInsertRows(Core.QModelIndex(), position, position)
-      new_item = {f"script_{len(self.script_data) + 1}": new_script}
-      self.script_data.append(new_item)
-      self._save_script_data()
-      self.endInsertRows()
-      self.rowCountChanged.emit()
-   
-   def remove_script(self, position: int):
-      if position < 0 or position > len(self.script_data): return False
-      self.beginRemoveRows(Core.QModelIndex(), position, position)
-      self.script_data.pop(position)
-      self._save_script_data()
-      self.endRemoveRows()
-      self.rowCountChanged.emit()
-      return True
-   
-   def get_script_events(self, index):
-      if 0 <= index < len(self.script_data):
-         script_dict = self.script_data[index]
-         return next(iter(script_dict.values()))
-      return None
 
+   # ===== Required QAbstractItemModel Methods ===== #
    def rowCount(self, parent=Core.QModelIndex()) -> int:
       if parent.isValid():
          return 0
