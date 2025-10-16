@@ -39,9 +39,8 @@ class CustomModel(Core.QAbstractListModel):
    
    def _load_script_data(self) -> list:
       directory = os.path.dirname(self.file_path)
-
-      if directory and not os.path.exists(directory):
-         os.makedirs(directory)
+      if directory: 
+         os.makedirs(directory, exist_ok=True)
 
       if not os.path.exists(self.file_path) or os.path.getsize(self.file_path) == 0:
          with open(self.file_path, 'w') as f:
@@ -60,11 +59,10 @@ class CustomModel(Core.QAbstractListModel):
       
    def _save_script_data(self):
       directory = os.path.dirname(self.file_path)
-      if directory and not os.path.exists(directory):
-         os.makedirs(directory)
+      if directory:
+         os.makedirs(directory, exist_ok=True)
       with open(self.file_path, 'w') as f:
          json.dump(self.script_data, f, indent=3)
-
 
    # ===== Required QAbstractItemModel Methods ===== #
    def rowCount(self, parent=Core.QModelIndex()) -> int:
