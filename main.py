@@ -27,9 +27,10 @@ class MainWindow(Widget.QMainWindow):
       self._init_variables()
       self._setup_ui_references()
       self.list_view.setModel(self.list_model)
+      self._init_ui_state()
 
       self._connect_signals()
-      self.update_ui_state()
+      # self.update_ui_state()
       
    def _init_variables(self):
       self.script_recorder = ScriptRecorder()
@@ -52,6 +53,16 @@ class MainWindow(Widget.QMainWindow):
       self.script_container = self.ui.script_container
       self.click_container = self.ui.click_container
       self.repeat_x_times_radio = self.ui.repeat_times_radio
+      self.repeat_x_times_input = self.ui.repeat_times_input
+      self.click_interval_input = self.ui.click_time_input
+
+   def _init_ui_state(self):
+      self.script_container.setEnabled(self.script_enabled)
+      self.script_checkbox.setChecked(self.script_enabled)
+      self.click_container.setEnabled(not self.script_enabled)
+      self.repeat_x_times_radio.setChecked(self.repeat_limited)
+      self.repeat_x_times_input.setValue(self.repeat_count)
+      self.click_interval_input.setValue(self.single_click_interval*1000)
 
    def _connect_signals(self):
       self.record_btn.clicked.connect(self.record_btn_clicked)
@@ -60,6 +71,8 @@ class MainWindow(Widget.QMainWindow):
       self.script_checkbox.toggled.connect(self.on_script_toggled)
       self.repeat_x_times_radio.toggled.connect(self.repeat_ltd_toggled)
       self.list_view.selectionModel().selectionChanged.connect(self.on_selection_changed)
+      self.repeat_x_times_input.valueChanged.connect(self.on_repeat_change)
+      self.click_interval_input.valueChanged.connect(self.on_interval_change)
 
    def update_ui_state(self):
       self.script_container.setEnabled(self.script_enabled)
@@ -72,6 +85,7 @@ class MainWindow(Widget.QMainWindow):
       self.delete_btn.setEnabled(row_count > 0 and has_selection)
       self.play_btn.setEnabled((row_count > 0 and has_selection) or not self.script_enabled)
 
+      # use worker thread for this UI to be non-blocked
       if self.script_recorder.is_recording == True:
          self.record_btn.setText("Stop")
       else: 
@@ -120,13 +134,13 @@ class MainWindow(Widget.QMainWindow):
          self.list_view.setCurrentIndex(new_index)
       self.update_ui_state()
 
+   # PENDING: Use threading to disable script_related buttons during playback
    @Core.Slot()
    def play_btn_clicked(self):
       index = self.script_sel_index
-      if index is None: return
-
+      if index is None: 
+         return
       script_events = self.list_model.get_script_events(index)
-      # Use threading to disable script_related buttons during playback
       self.script_player.play_script(script_events)
       self.script_player.stop_playing()
       self.update_ui_state()
@@ -134,6 +148,7 @@ class MainWindow(Widget.QMainWindow):
    @Core.Slot(bool)
    def on_script_toggled(self, state: bool):
       self.script_enabled = state
+      config.script_enabled = state
       if state == False:
          self.list_view.clearSelection()
          self.list_view.setCurrentIndex(Core.QModelIndex())
@@ -145,8 +160,15 @@ class MainWindow(Widget.QMainWindow):
 
    @Core.Slot(bool)
    def repeat_ltd_toggled(self, state: bool):
-      if state:
-         pass
+      config.repeat_limited = state
+
+   @Core.Slot(int)
+   def on_repeat_change(self, times: int):
+      config.repeat_count = times
+
+   @Core.Slot(int)
+   def on_interval_change(self, milliseconds: int):
+      config.single_click_interval = milliseconds / 1000
 
    @Core.Slot(Core.QItemSelection, Core.QItemSelection)
    def on_selection_changed(self, selected, deselected):
