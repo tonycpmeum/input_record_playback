@@ -6,12 +6,14 @@ from PySide6 import QtWidgets as Widget
 from PySide6 import QtCore    as Core
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPalette, QColor
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QStyle
 from pyside6_ui.monday import Ui_MainWindow
 from model_view import CustomModel, CustomListView
 from recorder_player import ScriptPlayer, ScriptRecorder
+from config_manager import config
 
-max_scripts = 10
+MAX_SCRIPTS = config.max_scripts
+
 class MainWindow(Widget.QMainWindow):
    def __init__(self):
       super().__init__()
@@ -20,6 +22,7 @@ class MainWindow(Widget.QMainWindow):
       self.setFixedSize(self.size())
       self.setWindowTitle("AutoClicker")
       QApplication.setStyle("Fusion")
+      self.setWindowOpacity(0.95)
 
       self._init_variables()
       self._setup_ui_references()
@@ -33,7 +36,12 @@ class MainWindow(Widget.QMainWindow):
       self.script_player = ScriptPlayer()
       self.list_model = CustomModel()
       self.script_sel_index: int | None = None
-      self.script_enabled = False
+
+      # =============== CONFIG VARIABLES ====================
+      self.single_click_interval: float = config.single_click_interval
+      self.script_enabled: bool = config.script_enabled
+      self.repeat_limited: bool = config.repeat_limited
+      self.repeat_count: int = config.repeat_count
 
    def _setup_ui_references(self):
       self.record_btn = self.ui.record_btn
@@ -43,12 +51,14 @@ class MainWindow(Widget.QMainWindow):
       self.script_checkbox = self.ui.enable_script_checkbox
       self.script_container = self.ui.script_container
       self.click_container = self.ui.click_container
+      self.repeat_x_times_radio = self.ui.repeat_times_radio
 
    def _connect_signals(self):
       self.record_btn.clicked.connect(self.record_btn_clicked)
       self.delete_btn.clicked.connect(self.del_btn_clicked)
       self.play_btn.clicked.connect(self.play_btn_clicked)
       self.script_checkbox.toggled.connect(self.on_script_toggled)
+      self.repeat_x_times_radio.toggled.connect(self.repeat_ltd_toggled)
       self.list_view.selectionModel().selectionChanged.connect(self.on_selection_changed)
 
    def update_ui_state(self):
@@ -58,7 +68,7 @@ class MainWindow(Widget.QMainWindow):
       row_count = self.list_model.rowCount()
       has_selection = self.script_sel_index is not None
 
-      self.record_btn.setEnabled(max_scripts > row_count)
+      self.record_btn.setEnabled(MAX_SCRIPTS > row_count)
       self.delete_btn.setEnabled(row_count > 0 and has_selection)
       self.play_btn.setEnabled((row_count > 0 and has_selection) or not self.script_enabled)
 
@@ -67,14 +77,14 @@ class MainWindow(Widget.QMainWindow):
       else: 
          self.record_btn.setText("Record")
       
-      if max_scripts <= row_count:
-         self.record_btn.setToolTip(f"Maximum {max_scripts} scripts reached")
+      if MAX_SCRIPTS <= row_count:
+         self.record_btn.setToolTip(f"Maximum {MAX_SCRIPTS} scripts reached")
       
    @Core.Slot()
    def record_btn_clicked(self):
       # NOW START Recording
       if self.script_recorder.is_recording == False:
-         if self.list_model.rowCount() >= max_scripts: return
+         if self.list_model.rowCount() >= MAX_SCRIPTS: return
          self.script_recorder.start_listening()
       # NOW END recording
       else:
@@ -133,6 +143,11 @@ class MainWindow(Widget.QMainWindow):
          self.script_sel_index = None
       self.update_ui_state()
 
+   @Core.Slot(bool)
+   def repeat_ltd_toggled(self, state: bool):
+      if state:
+         pass
+
    @Core.Slot(Core.QItemSelection, Core.QItemSelection)
    def on_selection_changed(self, selected, deselected):
       if selected.indexes():
@@ -143,7 +158,6 @@ class MainWindow(Widget.QMainWindow):
       else:
          self.script_sel_index = None
       self.update_ui_state()
-
 
 if __name__ == "__main__":
    app = Widget.QApplication(sys.argv)

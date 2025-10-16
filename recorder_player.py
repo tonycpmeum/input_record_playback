@@ -1,5 +1,6 @@
 import time
 from pynput import mouse, keyboard
+from config_manager import config
 
 class ScriptRecorder:
    def __init__(self):
@@ -9,9 +10,9 @@ class ScriptRecorder:
 
       self.is_recording = False
       self.record_buffer = []
-
       self.last_mouse_sample_time = 0
-      self.mouse_sample_interval = 0.1  # 100ms between samples
+      
+      self.mouse_sample_interval = config.sample_mouse_move_interval  # time between samples
 
    def start_listening(self):
       self.is_recording = True

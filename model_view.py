@@ -64,7 +64,7 @@ class CustomModel(Core.QAbstractListModel):
       with open(self.file_path, 'w') as f:
          json.dump(self.script_data, f, indent=3)
 
-   # ===== Required QAbstractItemModel Methods ===== #
+   # =============== Required QAbstractItemModel Methods =============== #
    def rowCount(self, parent=Core.QModelIndex()) -> int:
       if parent.isValid():
          return 0

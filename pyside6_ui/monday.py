@@ -82,6 +82,7 @@ class Ui_MainWindow(object):
         self.repeat_times_input.setFrame(True)
         self.repeat_times_input.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.repeat_times_input.setAccelerated(False)
+        self.repeat_times_input.setMinimum(1)
         self.repeat_times_input.setMaximum(10000)
         self.repeat_times_input.setValue(1)
 
@@ -189,6 +190,7 @@ class Ui_MainWindow(object):
         self.click_time_input.setFrame(True)
         self.click_time_input.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.click_time_input.setAccelerated(False)
+        self.click_time_input.setMinimum(1)
         self.click_time_input.setMaximum(10000)
         self.click_time_input.setValue(100)
 

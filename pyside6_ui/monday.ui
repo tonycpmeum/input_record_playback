@@ -82,6 +82,9 @@
        <property name="accelerated">
         <bool>false</bool>
        </property>
+       <property name="minimum">
+        <number>1</number>
+       </property>
        <property name="maximum">
         <number>10000</number>
        </property>
@@ -305,6 +308,9 @@
         </property>
         <property name="accelerated">
          <bool>false</bool>
+        </property>
+        <property name="minimum">
+         <number>1</number>
         </property>
         <property name="maximum">
          <number>10000</number>
