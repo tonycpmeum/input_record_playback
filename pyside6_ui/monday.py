@@ -216,6 +216,9 @@ class Ui_MainWindow(object):
 
         self.click_grid.addWidget(self.click_label, 0, 0, 1, 2)
 
+        self.stop_btn = QPushButton(self.centralwidget)
+        self.stop_btn.setObjectName(u"stop_btn")
+        self.stop_btn.setGeometry(QRect(190, 230, 161, 41))
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
@@ -235,6 +238,7 @@ class Ui_MainWindow(object):
 
         self.start_btn.setDefault(False)
         self.record_btn.setDefault(False)
+        self.stop_btn.setDefault(False)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
@@ -258,6 +262,7 @@ class Ui_MainWindow(object):
         self.delete_btn.setText(QCoreApplication.translate("MainWindow", u"Delete", None))
         self.ms_label.setText(QCoreApplication.translate("MainWindow", u"milliseconds", None))
         self.click_label.setText(QCoreApplication.translate("MainWindow", u"Single Click Interval", None))
+        self.stop_btn.setText(QCoreApplication.translate("MainWindow", u"Stop", None))
         self.menusettins.setTitle(QCoreApplication.translate("MainWindow", u"&Settings", None))
     # retranslateUi
 

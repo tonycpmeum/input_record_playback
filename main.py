@@ -26,9 +26,7 @@ class MainWindow(Widget.QMainWindow):
 
       self._init_variables()
       self._setup_ui_references()
-      self.list_view.setModel(self.list_model)
       self._init_ui_state()
-
       self._connect_signals()
       # self.update_ui_state()
       
@@ -49,17 +47,21 @@ class MainWindow(Widget.QMainWindow):
       self.delete_btn = self.ui.delete_btn
       self.play_btn = self.ui.start_btn
       self.list_view = self.ui.listView
+      self.list_view.setModel(self.list_model)
       self.script_checkbox = self.ui.enable_script_checkbox
       self.script_container = self.ui.script_container
       self.click_container = self.ui.click_container
       self.repeat_x_times_radio = self.ui.repeat_times_radio
       self.repeat_x_times_input = self.ui.repeat_times_input
       self.click_interval_input = self.ui.click_time_input
+      self.stop_btn = self.ui.stop_btn
 
    def _init_ui_state(self):
       self.script_container.setEnabled(self.script_enabled)
       self.script_checkbox.setChecked(self.script_enabled)
       self.click_container.setEnabled(not self.script_enabled)
+      self.stop_btn.setEnabled(False)
+      self.play_btn.setEnabled(not self.script_enabled)
       self.repeat_x_times_radio.setChecked(self.repeat_limited)
       self.repeat_x_times_input.setValue(self.repeat_count)
       self.click_interval_input.setValue(self.single_click_interval*1000)
@@ -67,7 +69,7 @@ class MainWindow(Widget.QMainWindow):
    def _connect_signals(self):
       self.record_btn.clicked.connect(self.record_btn_clicked)
       self.delete_btn.clicked.connect(self.del_btn_clicked)
-      self.play_btn.clicked.connect(self.play_btn_clicked)
+      self.stop_btn.clicked.connect(self.stop_btn_clicked)
       self.script_checkbox.toggled.connect(self.on_script_toggled)
       self.repeat_x_times_radio.toggled.connect(self.repeat_ltd_toggled)
       self.list_view.selectionModel().selectionChanged.connect(self.on_selection_changed)
@@ -135,13 +137,18 @@ class MainWindow(Widget.QMainWindow):
       self.update_ui_state()
 
    # PENDING: Use threading to disable script_related buttons during playback
+   # PENDING: Use threading to disable play button during playback
    @Core.Slot()
    def play_btn_clicked(self):
-      index = self.script_sel_index
-      if index is None: 
-         return
-      script_events = self.list_model.get_script_events(index)
-      self.script_player.play_script(script_events)
+      if self.script_enabled:
+         index = self.script_sel_index
+         if index is None: 
+            return
+         script_events = self.list_model.get_script_events(index)
+         self.script_player.play_script(script_events)
+      else:
+         self.script_player.play_single_click()
+         
       self.script_player.stop_playing()
       self.update_ui_state()
 
@@ -165,6 +172,10 @@ class MainWindow(Widget.QMainWindow):
    @Core.Slot(int)
    def on_repeat_change(self, times: int):
       config.repeat_count = times
+
+   @Core.Slot()
+   def stop_btn_clicked(self):
+      pass
 
    @Core.Slot(int)
    def on_interval_change(self, milliseconds: int):
