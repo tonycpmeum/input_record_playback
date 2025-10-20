@@ -1,5 +1,7 @@
 import time
 from pynput import mouse, keyboard
+from PySide6.QtCore import QObject, Signal
+from PySide6 import QtCore as Core
 from config_manager import config
 
 class ScriptRecorder:
@@ -32,7 +34,6 @@ class ScriptRecorder:
       
       self.keyboard_listener.start()
       self.mouse_listener.start()
-      print("Listener started")
 
    def stop_listening(self):
       self.is_recording = False
@@ -133,10 +134,6 @@ class ScriptPlayer:
    def __init__(self):
       self.mouse_controller = mouse.Controller()
       self.keyboard_controller = keyboard.Controller()
-      self.is_playing = False
-      self.repeat_count: int = config.repeat_count
-      self.repeat_limited: bool = config.repeat_limited
-      self.single_click_interval: float = config.single_click_interval
       
    def convert_button_string(self, button_str):
       button_map = {
@@ -245,44 +242,47 @@ class ScriptPlayer:
          available_key_map = {k: v for k, v in special_key_map.items() if v is not None}
          return available_key_map.get(key_str, keyboard.KeyCode.from_vk(0))
    
-   def play_single_click(self):
-      for i in range(self.repeat_count):
+   def play_single_click(self, stop_condition=None):
+      for i in range(config.repeat_count):
+         print(f"Loop {i} playing...")
          self.mouse_controller.click(mouse.Button.left, 1)
-         if i < self.repeat_count:
-            print(f"clicked {i}")
-            time.sleep(self.single_click_interval)
+         if stop_condition and stop_condition():
+            break
+         if i < config.repeat_count - 1:
+            time.sleep(config.single_click_interval)
 
    # play script with config
-   def play_script(self, script_events):
-      while not self.repeat_limited:
-         self._execute_script(script_events)
-      
-      for i in range(0, self.repeat_count):
-         self._execute_script(script_events)
+   def play_script(self, script_events, stop_condition=None):
+      if config.repeat_limited:
+         for i in range(0, config.repeat_count):
+            print(f"Loop {i} playing...")
+            if stop_condition and stop_condition():
+               break
+            self._execute_script(script_events, stop_condition)
+      else:
+         while not (stop_condition and stop_condition()):
+            self._execute_script(script_events, stop_condition)
 
    # play script without config
-   def _execute_script(self, script_events):
-      if self.is_playing: 
+   def _execute_script(self, script_events, stop_condition=None):
+      if not script_events: 
          return
-      if not script_events: return
-      self.is_playing = True
       
       sorted_events = sorted(script_events, key=lambda x: x.get('time', 0))
       start_time = time.monotonic()
 
       for event in sorted_events:
+         if stop_condition and stop_condition():
+            break
          # Wait until the right time for this event
          event_time = event.get('time', 0)
-         while time.monotonic() - start_time < event_time and self.is_playing:
+         while time.monotonic() - start_time < event_time and (stop_condition is None or not stop_condition()):
             time.sleep(0.001)  # Small sleep to prevent busy waiting
                
-         if not self.is_playing:
+         if stop_condition and stop_condition():
             break
                
          self._execute_event(event)
-
-   def stop_playing(self):
-      self.is_playing = False
    
    def _execute_event(self, event):
       event_type = event.get('type')
@@ -322,3 +322,48 @@ class ScriptPlayer:
             self.keyboard_controller.press(key)
          else:
             self.keyboard_controller.release(key)
+
+class PlaybackWorker(QObject):
+   started = Signal()
+   finished = Signal()
+   progress = Signal(str)
+
+   request_play_script = Signal(list)
+   request_play_single_click = Signal()
+
+   def __init__(self):
+      super().__init__()
+      self.script_player = ScriptPlayer()
+      self.is_playing = False
+
+      self.request_play_script.connect(self.play_script)
+      self.request_play_single_click.connect(self.play_single_click)
+
+   def play_script(self, script_events):
+      self.is_playing = True
+      self.started.emit()
+      self.progress.emit("Playing script...")
+
+      try:
+         self.script_player.play_script(script_events, stop_condition=lambda: not self.is_playing)
+      except Exception as e:
+         self.progress.emit(f"Playback error: {str(e)}")
+      finally:
+         self.is_playing = False
+         self.finished.emit()
+
+   def play_single_click(self):
+      self.is_playing = True
+      self.started.emit()
+      self.progress.emit("Single click mode...")
+      
+      try:
+         self.script_player.play_single_click(stop_condition=lambda: not self.is_playing)
+      except Exception as e:
+         self.progress.emit(f"Single click error: {str(e)}")
+      finally:
+         self.is_playing = False
+         self.finished.emit() 
+
+   def stop(self):
+      self.is_playing = False

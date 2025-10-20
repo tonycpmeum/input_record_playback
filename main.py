@@ -9,7 +9,7 @@ from PySide6.QtGui import QPalette, QColor
 from PySide6.QtWidgets import QApplication, QStyle
 from pyside6_ui.monday import Ui_MainWindow
 from model_view import CustomModel, CustomListView
-from recorder_player import ScriptPlayer, ScriptRecorder
+from recorder_player import ScriptRecorder, PlaybackWorker
 from config_manager import config
 
 MAX_SCRIPTS = config.max_scripts
@@ -26,13 +26,12 @@ class MainWindow(Widget.QMainWindow):
 
       self._init_variables()
       self._setup_ui_references()
+      self._init_threading()
       self._init_ui_state()
       self._connect_signals()
-      # self.update_ui_state()
       
    def _init_variables(self):
       self.script_recorder = ScriptRecorder()
-      self.script_player = ScriptPlayer()
       self.list_model = CustomModel()
       self.script_sel_index: int | None = None
 
@@ -69,12 +68,24 @@ class MainWindow(Widget.QMainWindow):
    def _connect_signals(self):
       self.record_btn.clicked.connect(self.record_btn_clicked)
       self.delete_btn.clicked.connect(self.del_btn_clicked)
+      self.play_btn.clicked.connect(self.play_btn_clicked)
       self.stop_btn.clicked.connect(self.stop_btn_clicked)
       self.script_checkbox.toggled.connect(self.on_script_toggled)
       self.repeat_x_times_radio.toggled.connect(self.repeat_ltd_toggled)
       self.list_view.selectionModel().selectionChanged.connect(self.on_selection_changed)
       self.repeat_x_times_input.valueChanged.connect(self.on_repeat_change)
       self.click_interval_input.valueChanged.connect(self.on_interval_change)
+
+   def _init_threading(self):
+      self.playback_thread = Core.QThread()
+      self.playback_worker = PlaybackWorker()
+      self.playback_worker.moveToThread(self.playback_thread)
+
+      self.playback_worker.finished.connect(self.update_ui_state)
+      self.playback_worker.started.connect(self.on_worker_started)
+      self.playback_worker.progress.connect(self.update_status)
+
+      self.playback_thread.start()
 
    def update_ui_state(self):
       self.script_container.setEnabled(self.script_enabled)
@@ -83,12 +94,15 @@ class MainWindow(Widget.QMainWindow):
       row_count = self.list_model.rowCount()
       has_selection = self.script_sel_index is not None
 
-      self.record_btn.setEnabled(MAX_SCRIPTS > row_count)
-      self.delete_btn.setEnabled(row_count > 0 and has_selection)
-      self.play_btn.setEnabled((row_count > 0 and has_selection) or not self.script_enabled)
+      can_record = (MAX_SCRIPTS > row_count and not self.playback_worker.is_playing)
+      self.record_btn.setEnabled(can_record)
 
-      # use worker thread for this UI to be non-blocked
-      if self.script_recorder.is_recording == True:
+      can_delete = ((row_count > 0 and has_selection) and not self.script_recorder.is_recording and not self.playback_worker.is_playing)
+      self.delete_btn.setEnabled(can_delete)
+
+      can_play = ((row_count > 0 and has_selection or not self.script_enabled) and not self.script_recorder.is_recording and not self.playback_worker.is_playing)
+      self.play_btn.setEnabled(can_play)
+      if self.script_recorder.is_recording == True:   
          self.record_btn.setText("Stop")
       else: 
          self.record_btn.setText("Record")
@@ -102,7 +116,6 @@ class MainWindow(Widget.QMainWindow):
       if self.script_recorder.is_recording == False:
          if self.list_model.rowCount() >= MAX_SCRIPTS: return
          self.script_recorder.start_listening()
-      # NOW END recording
       else:
          self.script_recorder.stop_listening()
          self.list_model.add_script(self.script_recorder.record_buffer)
@@ -114,7 +127,6 @@ class MainWindow(Widget.QMainWindow):
             self.list_view.setCurrentIndex(model_index)
             self.list_view.selectionModel().select(model_index, Core.QItemSelectionModel.SelectCurrent)
             self.script_sel_index = last_index
-
       self.update_ui_state()
 
    @Core.Slot()
@@ -136,8 +148,6 @@ class MainWindow(Widget.QMainWindow):
          self.list_view.setCurrentIndex(new_index)
       self.update_ui_state()
 
-   # PENDING: Use threading to disable script_related buttons during playback
-   # PENDING: Use threading to disable play button during playback
    @Core.Slot()
    def play_btn_clicked(self):
       if self.script_enabled:
@@ -145,12 +155,9 @@ class MainWindow(Widget.QMainWindow):
          if index is None: 
             return
          script_events = self.list_model.get_script_events(index)
-         self.script_player.play_script(script_events)
+         self.playback_worker.request_play_script.emit(script_events)
       else:
-         self.script_player.play_single_click()
-         
-      self.script_player.stop_playing()
-      self.update_ui_state()
+         self.playback_worker.request_play_single_click.emit()
 
    @Core.Slot(bool)
    def on_script_toggled(self, state: bool):
@@ -175,7 +182,7 @@ class MainWindow(Widget.QMainWindow):
 
    @Core.Slot()
    def stop_btn_clicked(self):
-      pass
+      self.playback_worker.stop()
 
    @Core.Slot(int)
    def on_interval_change(self, milliseconds: int):
@@ -186,14 +193,28 @@ class MainWindow(Widget.QMainWindow):
       if selected.indexes():
          current_index = selected.indexes()[0]
          current_row = current_index.row()
-         print(f"Selected index: {current_row}")
          self.script_sel_index = current_row
       else:
          self.script_sel_index = None
       self.update_ui_state()
 
+   @Core.Slot(str)
+   def update_status(self, message: str):
+      print(f"{message}")
+
+   @Core.Slot()
+   def on_worker_started(self):
+      self.update_ui_state()
+
+   # Close app cleanup
+   def closeEvent(self, event):
+      self.playback_worker.stop()
+      self.playback_thread.quit()
+      self.playback_thread.wait(1000)
+      event.accept()
+
 if __name__ == "__main__":
    app = Widget.QApplication(sys.argv)
    window = MainWindow()
    window.show()
-   sys.exit(app.exec())
+   sys.exit(app.exec()) 
