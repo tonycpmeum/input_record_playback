@@ -243,12 +243,16 @@ class ScriptPlayer:
          return available_key_map.get(key_str, keyboard.KeyCode.from_vk(0))
    
    def play_single_click(self, stop_condition=None):
-      for i in range(config.repeat_count):
-         print(f"Loop {i} playing...")
-         self.mouse_controller.click(mouse.Button.left, 1)
-         if stop_condition and stop_condition():
-            break
-         if i < config.repeat_count - 1:
+      if config.repeat_limited:
+         for i in range(config.repeat_count):
+            self.mouse_controller.click(self.convert_button_string(config.button_type), config.click_type)
+            if stop_condition and stop_condition():
+               break
+            if i < config.repeat_count - 1:
+               time.sleep(config.single_click_interval)
+      else:
+         while not (stop_condition and stop_condition()):
+            self.mouse_controller.click(self.convert_button_string(config.button_type), config.click_type)
             time.sleep(config.single_click_interval)
 
    # play script with config
