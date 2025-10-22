@@ -33,13 +33,6 @@ class MainWindow(Widget.QMainWindow):
    def _init_variables(self):
       self.script_recorder = ScriptRecorder()
       self.list_model = CustomModel()
-      self.script_sel_index: int | None = None
-
-      # =============== CONFIG VARIABLES ====================
-      self.click_interval = config.click_interval
-      self.script_enabled = config.script_enabled
-      self.repeat_limited = config.repeat_limited
-      self.repeat_count = config.repeat_count
 
    def _setup_ui_references(self):
       self.record_btn = self.ui.record_btn
@@ -52,21 +45,24 @@ class MainWindow(Widget.QMainWindow):
       self.click_container = self.ui.click_container
       self.repeat_x_times_radio = self.ui.repeat_times_radio
       self.repeat_x_times_input = self.ui.repeat_times_input
-      self.click_interval_input = self.ui.click_interval_input
+      self.interval_input_ms = self.ui.click_interval_input
       self.stop_btn = self.ui.stop_btn
       self.mousebutton_cbbox = self.ui.button_combobox
       self.clicktype_cbbox = self.ui.clicktype_combobox
 
    def _init_ui_state(self):
-      self.script_container.setEnabled(self.script_enabled)
-      self.script_checkbox.setChecked(self.script_enabled)
-      self.stop_btn.setEnabled(False)
-      self.play_btn.setEnabled(not self.script_enabled)
-      self.repeat_x_times_radio.setChecked(self.repeat_limited)
-      self.repeat_x_times_input.setValue(self.repeat_count)
+      self.script_container.setEnabled(config.script_enabled)
+      self.script_checkbox.setChecked(config.script_enabled)
+      self.click_container.setEnabled(not config.script_enabled)
 
-      self.click_container.setEnabled(not self.script_enabled)
-      self.click_interval_input.setValue(self.click_interval*1000)
+      if config.script_enabled:
+         self.list_view.setCurrentIndex(self.list_model.index(config.script_selected_index))
+      
+      self.stop_btn.setEnabled(False)
+      self.play_btn.setEnabled(not config.script_enabled or config.script_selected_index != -1)
+      self.repeat_x_times_radio.setChecked(config.repeat_limited)
+      self.repeat_x_times_input.setValue(config.repeat_count)
+
       self.clicktype_cbbox.setCurrentIndex(config.click_type - 1)
       self.mousebutton_cbbox.blockSignals(True)
       self.mousebutton_cbbox.setCurrentText(config.click_button.split('.')[1].capitalize())
@@ -82,7 +78,7 @@ class MainWindow(Widget.QMainWindow):
       ]
 
       config_signals = [
-         (self.click_interval_input.valueChanged, self.interval_change),
+         (self.interval_input_ms.valueChanged, self.interval_change),
          (self.mousebutton_cbbox.currentTextChanged, self.mousebutton_change),
          (self.clicktype_cbbox.currentIndexChanged, self.clicktype_change),
          (self.script_checkbox.toggled, self.script_toggled),
@@ -105,11 +101,16 @@ class MainWindow(Widget.QMainWindow):
       self.playback_thread.start()
 
    def update_ui_state(self):
-      self.script_container.setEnabled(self.script_enabled)
-      self.click_container.setEnabled(not self.script_enabled)
+      self.script_container.setEnabled(config.script_enabled)
+      self.click_container.setEnabled(not config.script_enabled)
 
       row_count = self.list_model.rowCount()
-      has_selection = self.script_sel_index is not None
+      has_selection = config.script_selected_index != -1
+
+      if config.script_enabled and has_selection:
+         self.list_view.setCurrentIndex(self.list_model.index(config.script_selected_index))
+      else:
+         self.list_view.clearSelection()
 
       can_record = (MAX_SCRIPTS > row_count and not self.playback_worker.is_playing)
       self.record_btn.setEnabled(can_record)
@@ -117,7 +118,7 @@ class MainWindow(Widget.QMainWindow):
       can_delete = ((row_count > 0 and has_selection) and not self.script_recorder.is_recording and not self.playback_worker.is_playing)
       self.delete_btn.setEnabled(can_delete)
 
-      can_play = ((row_count > 0 and has_selection or not self.script_enabled) and not self.script_recorder.is_recording and not self.playback_worker.is_playing)
+      can_play = ((row_count > 0 and has_selection or not config.script_enabled) and not self.script_recorder.is_recording and not self.playback_worker.is_playing)
       self.play_btn.setEnabled(can_play)
       self.stop_btn.setEnabled(self.playback_worker.is_playing)
 
@@ -140,12 +141,8 @@ class MainWindow(Widget.QMainWindow):
          self.list_model.add_script(self.script_recorder.record_buffer)
 
          # Select the last index (newly added script)
-         last_index = self.list_model.rowCount() - 1
-         if last_index >= 0:
-            model_index = self.list_model.index(last_index)
-            self.list_view.setCurrentIndex(model_index)
-            self.list_view.selectionModel().select(model_index, Core.QItemSelectionModel.SelectCurrent)
-            self.script_sel_index = last_index
+         config.script_selected_index = self.list_model.rowCount() - 1
+
       self.update_ui_state()
 
    @Core.Slot()
@@ -156,41 +153,38 @@ class MainWindow(Widget.QMainWindow):
       current_row = current_index.row()
       self.list_model.remove_script(current_row)
       new_row_count = self.list_model.rowCount()
-      # After deletion, update selection if needed
+      
       if new_row_count > 0:
-         if current_row < new_row_count:
-            # Select the same position (now has different content)
-            new_index = self.list_model.index(current_row)
-         else:
-            # If we deleted the last item, select the new last item
-            new_index = self.list_model.index(new_row_count - 1)
-         self.list_view.setCurrentIndex(new_index)
+         config.script_selected_index = min(current_row, new_row_count - 1)
+      else:
+         config.script_selected_index = -1
+
       self.update_ui_state()
 
    @Core.Slot()
    def play_btn_clicked(self):
-      if self.script_enabled:
-         index = self.script_sel_index
-         if index is None: 
+      if config.script_enabled:
+         index = config.script_selected_index
+         if index == -1: 
             return
          script_events = self.list_model.get_script_events(index)
          self.playback_worker.request_play_script.emit(script_events)
       else:
          self.playback_worker.request_play_single_click.emit()
 
+   @Core.Slot(Core.QItemSelection, Core.QItemSelection)
+   def selection_changed(self, selected, deselected):
+      current_index = self.list_view.currentIndex()
+      if current_index.isValid():
+         config.script_selected_index = current_index.row()
+      else:
+         config.script_selected_index = -1
+      
+      self.update_ui_state()
+
    @Core.Slot()
    def stop_btn_clicked(self):
       self.playback_worker.stop()
-
-   @Core.Slot(Core.QItemSelection, Core.QItemSelection)
-   def selection_changed(self, selected, deselected):
-      if selected.indexes():
-         current_index = selected.indexes()[0]
-         current_row = current_index.row()
-         self.script_sel_index = current_row
-      else:
-         self.script_sel_index = None
-      self.update_ui_state()
 
    # =============== CONFIG INPUTS ===============
    @Core.Slot(int)
@@ -207,15 +201,7 @@ class MainWindow(Widget.QMainWindow):
 
    @Core.Slot(bool)
    def script_toggled(self, state: bool):
-      self.script_enabled = state
       config.script_enabled = state
-      if state == False:
-         self.list_view.clearSelection()
-         self.list_view.setCurrentIndex(Core.QModelIndex())
-         selection_model = self.list_view.selectionModel()
-         if selection_model: 
-            selection_model.clearSelection()
-         self.script_sel_index = None
       self.update_ui_state()
 
    @Core.Slot(bool)

@@ -24,6 +24,7 @@ class ConfigManager:
          },
          "script_settings": {
             "script_enabled": False,
+            "script_selected_index": -1
          },
          "repeat_settings": {
             "repeat_limited": False,
@@ -97,6 +98,14 @@ class ConfigManager:
    @script_enabled.setter
    def script_enabled(self, value: bool): 
       self._data["script_settings"]["script_enabled"] = value
+      self._save_data()
+
+   @property
+   def script_selected_index(self) -> int: 
+      return self._data["script_settings"]["script_selected_index"]
+   @script_selected_index.setter
+   def script_selected_index(self, value: int): 
+      self._data["script_settings"]["script_selected_index"] = value
       self._save_data()
 
    # =============== REPEAT SETTINGS ===============

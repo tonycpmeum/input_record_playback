@@ -275,6 +275,7 @@ class ScriptPlayer:
 
          while time.monotonic() < target_time:
             remaining_time = target_time - time.monotonic()
+            print(remaining_time)
             time.sleep(remaining_time)
                
          if stop_condition():
