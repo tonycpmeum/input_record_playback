@@ -98,24 +98,17 @@ class ScriptRecorder:
       if not self.is_recording: return
 
       time_elapsed = time.monotonic() - self.start_time
+      current_interval = time_elapsed - self.last_mouse_sample_time
 
-      event = {
-         'type': 'mouse_move',
-         'x': x,
-         'y': y,
-         'time': time_elapsed
-      }
-      self.record_buffer.append(event)
-
-      if time_elapsed - self.last_mouse_sample_time >= self.mouse_sample_interval:
-            event = {
-                'type': 'mouse_move',
-                'x': x,
-                'y': y,
-                'time': time_elapsed
-            }
-            self.record_buffer.append(event)
-            self.last_mouse_sample_time = time_elapsed
+      if current_interval >= self.mouse_sample_interval:
+         event = {
+            'type': 'mouse_move',
+            'x': x,
+            'y': y,
+            'time': time_elapsed
+         }
+         self.record_buffer.append(event)
+         self.last_mouse_sample_time = time_elapsed
 
    def _on_scroll__ms(self, x, y, dx, dy):
       if not self.is_recording: return
@@ -242,48 +235,49 @@ class ScriptPlayer:
          available_key_map = {k: v for k, v in special_key_map.items() if v is not None}
          return available_key_map.get(key_str, keyboard.KeyCode.from_vk(0))
    
-   def play_single_click(self, stop_condition=None):
-      if config.repeat_limited:
-         for i in range(config.repeat_count):
-            self.mouse_controller.click(self.convert_button_string(config.button_type), config.click_type)
-            if stop_condition and stop_condition():
-               break
-            if i < config.repeat_count - 1:
-               time.sleep(config.single_click_interval)
-      else:
-         while not (stop_condition and stop_condition()):
-            self.mouse_controller.click(self.convert_button_string(config.button_type), config.click_type)
-            time.sleep(config.single_click_interval)
+   def play_single_click(self, stop_condition):
+      repeat_limited = config.repeat_limited
+      repeat_count = config.repeat_count
+      button = self.convert_button_string(config.click_button)
+      click_type = config.click_type
+      interval = config.click_interval
 
-   # play script with config
-   def play_script(self, script_events, stop_condition=None):
+      if repeat_limited:
+         for i in range(repeat_count):
+            self.mouse_controller.click(button, click_type)
+            if stop_condition():
+               break
+            if i < repeat_count - 1:
+               time.sleep(interval)
+      else:
+         while not stop_condition():
+            self.mouse_controller.click(button, click_type)
+            time.sleep(interval)
+
+   def play_script(self, script_events, stop_condition):
       if config.repeat_limited:
          for i in range(0, config.repeat_count):
-            print(f"Loop {i} playing...")
-            if stop_condition and stop_condition():
-               break
-            self._execute_script(script_events, stop_condition)
+            self._execute_script_once(script_events, stop_condition)
       else:
-         while not (stop_condition and stop_condition()):
-            self._execute_script(script_events, stop_condition)
+         while not stop_condition():
+            self._execute_script_once(script_events, stop_condition)
 
-   # play script without config
-   def _execute_script(self, script_events, stop_condition=None):
-      if not script_events: 
+   def _execute_script_once(self, script_events, stop_condition):
+      if not script_events:
          return
       
       sorted_events = sorted(script_events, key=lambda x: x.get('time', 0))
       start_time = time.monotonic()
 
       for event in sorted_events:
-         if stop_condition and stop_condition():
-            break
-         # Wait until the right time for this event
          event_time = event.get('time', 0)
-         while time.monotonic() - start_time < event_time and (stop_condition is None or not stop_condition()):
-            time.sleep(0.001)  # Small sleep to prevent busy waiting
+         target_time = start_time + event_time
+
+         while time.monotonic() < target_time:
+            remaining_time = target_time - time.monotonic()
+            time.sleep(remaining_time)
                
-         if stop_condition and stop_condition():
+         if stop_condition():
             break
                
          self._execute_event(event)
@@ -291,7 +285,21 @@ class ScriptPlayer:
    def _execute_event(self, event):
       event_type = event.get('type')
       
-      if event_type == 'mouse_click':
+      if event_type == 'mouse_move':
+         x = event.get('x')
+         y = event.get('y')
+         self.mouse_controller.position = (x, y)
+      elif event_type == 'keyboard':
+         action = event.get('action')
+         key_str = event.get('key')
+         key_type = event.get('key_type')
+         key = self.convert_key_string(key_str, key_type)
+
+         if action == 'press':
+            self.keyboard_controller.press(key)
+         else:
+            self.keyboard_controller.release(key)
+      elif event_type == 'mouse_click':
          button_str = event.get('button')
          x = event.get('x')
          y = event.get('y')
@@ -304,10 +312,6 @@ class ScriptPlayer:
             self.mouse_controller.press(button)
          else:
             self.mouse_controller.release(button)
-      elif event_type == 'mouse_move':
-         x = event.get('x')
-         y = event.get('y')
-         self.mouse_controller.position = (x, y)
       elif event_type == 'mouse_scroll':
          x = event.get('x')
          y = event.get('y')
@@ -316,16 +320,6 @@ class ScriptPlayer:
          
          self.mouse_controller.position = (x, y)
          self.mouse_controller.scroll(dx, dy)
-      elif event_type == 'keyboard':
-         action = event.get('action')
-         key_str = event.get('key')
-         key_type = event.get('key_type')
-         key = self.convert_key_string(key_str, key_type)
-
-         if action == 'press':
-            self.keyboard_controller.press(key)
-         else:
-            self.keyboard_controller.release(key)
 
 class PlaybackWorker(QObject):
    started = Signal()
@@ -353,8 +347,7 @@ class PlaybackWorker(QObject):
       except Exception as e:
          self.progress.emit(f"Playback error: {str(e)}")
       finally:
-         self.is_playing = False
-         self.finished.emit()
+         self.stop()
 
    def play_single_click(self):
       self.is_playing = True
@@ -366,8 +359,8 @@ class PlaybackWorker(QObject):
       except Exception as e:
          self.progress.emit(f"Single click error: {str(e)}")
       finally:
-         self.is_playing = False
-         self.finished.emit() 
+         self.stop()
 
    def stop(self):
       self.is_playing = False
+      self.finished.emit()

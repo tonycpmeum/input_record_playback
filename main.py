@@ -36,10 +36,10 @@ class MainWindow(Widget.QMainWindow):
       self.script_sel_index: int | None = None
 
       # =============== CONFIG VARIABLES ====================
-      self.single_click_interval: float = config.single_click_interval
-      self.script_enabled: bool = config.script_enabled
-      self.repeat_limited: bool = config.repeat_limited
-      self.repeat_count: int = config.repeat_count
+      self.click_interval = config.click_interval
+      self.script_enabled = config.script_enabled
+      self.repeat_limited = config.repeat_limited
+      self.repeat_count = config.repeat_count
 
    def _setup_ui_references(self):
       self.record_btn = self.ui.record_btn
@@ -60,27 +60,38 @@ class MainWindow(Widget.QMainWindow):
    def _init_ui_state(self):
       self.script_container.setEnabled(self.script_enabled)
       self.script_checkbox.setChecked(self.script_enabled)
-      self.click_container.setEnabled(not self.script_enabled)
       self.stop_btn.setEnabled(False)
       self.play_btn.setEnabled(not self.script_enabled)
       self.repeat_x_times_radio.setChecked(self.repeat_limited)
       self.repeat_x_times_input.setValue(self.repeat_count)
-      self.click_interval_input.setValue(self.single_click_interval*1000)
+
+      self.click_container.setEnabled(not self.script_enabled)
+      self.click_interval_input.setValue(self.click_interval*1000)
       self.clicktype_cbbox.setCurrentIndex(config.click_type - 1)
+      self.mousebutton_cbbox.blockSignals(True)
+      self.mousebutton_cbbox.setCurrentText(config.click_button.split('.')[1].capitalize())
+      self.mousebutton_cbbox.blockSignals(False)
 
    def _connect_signals(self):
-      self.record_btn.clicked.connect(self.record_btn_clicked)
-      self.delete_btn.clicked.connect(self.del_btn_clicked)
-      self.play_btn.clicked.connect(self.play_btn_clicked)
-      self.stop_btn.clicked.connect(self.stop_btn_clicked)
-      self.script_checkbox.toggled.connect(self.script_toggled)
-      self.repeat_x_times_radio.toggled.connect(self.repeat_ltd_toggled)
-      self.list_view.selectionModel().selectionChanged.connect(self.selection_changed)
-      self.repeat_x_times_input.valueChanged.connect(self.repeat_change)
-      self.click_interval_input.valueChanged.connect(self.interval_change)
-      self.mousebutton_cbbox.currentTextChanged.connect(self.mousebutton_change)
-      self.mousebutton_cbbox.setCurrentText(config.button_type.split('.')[1].capitalize())
-      self.clicktype_cbbox.currentIndexChanged.connect(self.clicktype_change)
+      playback_signals = [
+         (self.record_btn.clicked, self.record_btn_clicked),
+         (self.delete_btn.clicked, self.del_btn_clicked),
+         (self.play_btn.clicked, self.play_btn_clicked),
+         (self.stop_btn.clicked, self.stop_btn_clicked),
+         (self.list_view.selectionModel().selectionChanged, self.selection_changed),
+      ]
+
+      config_signals = [
+         (self.click_interval_input.valueChanged, self.interval_change),
+         (self.mousebutton_cbbox.currentTextChanged, self.mousebutton_change),
+         (self.clicktype_cbbox.currentIndexChanged, self.clicktype_change),
+         (self.script_checkbox.toggled, self.script_toggled),
+         (self.repeat_x_times_radio.toggled, self.repeat_ltd_toggled),
+         (self.repeat_x_times_input.valueChanged, self.repeat_change),
+      ]
+
+      for signal, slot in playback_signals + config_signals:
+         signal.connect(slot)
 
    def _init_threading(self):
       self.playback_thread = Core.QThread()
@@ -167,6 +178,10 @@ class MainWindow(Widget.QMainWindow):
       else:
          self.playback_worker.request_play_single_click.emit()
 
+   @Core.Slot()
+   def stop_btn_clicked(self):
+      self.playback_worker.stop()
+
    @Core.Slot(Core.QItemSelection, Core.QItemSelection)
    def selection_changed(self, selected, deselected):
       if selected.indexes():
@@ -178,6 +193,18 @@ class MainWindow(Widget.QMainWindow):
       self.update_ui_state()
 
    # =============== CONFIG INPUTS ===============
+   @Core.Slot(int)
+   def interval_change(self, milliseconds: int):
+      config.click_interval = milliseconds / 1000
+
+   @Core.Slot(str)
+   def mousebutton_change(self, string: str):
+      config.click_button = "Button." + string.lower()
+
+   @Core.Slot(int)
+   def clicktype_change(self, index):
+      config.click_type = index + 1
+
    @Core.Slot(bool)
    def script_toggled(self, state: bool):
       self.script_enabled = state
@@ -198,22 +225,6 @@ class MainWindow(Widget.QMainWindow):
    @Core.Slot(int)
    def repeat_change(self, times: int):
       config.repeat_count = times
-
-   @Core.Slot()
-   def stop_btn_clicked(self):
-      self.playback_worker.stop()
-
-   @Core.Slot(int)
-   def interval_change(self, milliseconds: int):
-      config.single_click_interval = milliseconds / 1000
-
-   @Core.Slot(str)
-   def mousebutton_change(self, string: str):
-      config.button_type = "Button." + string.lower()
-
-   @Core.Slot(int)
-   def clicktype_change(self, index):
-      config.click_type = index + 1
 
    # =============== THREAD SLOTS & FUNC ===============
    @Core.Slot(str)

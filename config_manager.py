@@ -18,8 +18,8 @@ class ConfigManager:
       default_config = {
          "max_scripts": 10,
          "click_settings": {
-            "single_click_interval": 1.0,
-            "button_type": "Button.left",
+            "click_interval": 1.0,
+            "click_button": "Button.left",
             "click_type": 1
          },
          "script_settings": {
@@ -66,19 +66,19 @@ class ConfigManager:
 
    # =============== CLILCK SETTINGS ===============
    @property
-   def single_click_interval(self) -> float: 
-      return self._data['click_settings']["single_click_interval"]
-   @single_click_interval.setter
-   def single_click_interval(self, value: float): 
-      self._data['click_settings']["single_click_interval"] = value
+   def click_interval(self) -> float: 
+      return self._data['click_settings']["click_interval"]
+   @click_interval.setter
+   def click_interval(self, value: float): 
+      self._data['click_settings']["click_interval"] = value
       self._save_data()
 
    @property
-   def button_type(self) -> str: 
-      return self._data['click_settings']["button_type"]
-   @button_type.setter
-   def button_type(self, value: str): 
-      self._data['click_settings']["button_type"] = value
+   def click_button(self) -> str: 
+      return self._data['click_settings']["click_button"]
+   @click_button.setter
+   def click_button(self, value: str): 
+      self._data['click_settings']["click_button"] = value
       self._save_data()
 
    @property
