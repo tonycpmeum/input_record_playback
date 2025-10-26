@@ -9,7 +9,7 @@ from PySide6.QtGui import QPalette, QColor
 from PySide6.QtWidgets import QApplication, QStyle
 from pyside6_ui.monday import Ui_MainWindow
 from model_view import list_model, CustomListView
-from recorder_player import ScriptRecorder, PlaybackWorker
+from recorder_player import ScriptRecorder, ScriptPlayer
 from global_hotkey import HotkeyManager
 from config_manager import config
 
@@ -99,17 +99,12 @@ class MainWindow(Widget.QMainWindow):
 
    def _init_threading(self):
       self.playback_thread = Core.QThread()
-      self.playback_worker = PlaybackWorker()
+      self.playback_worker = ScriptPlayer()
       self.playback_worker.moveToThread(self.playback_thread)
-
-      self.playback_worker.request_stop.connect(
-         self.playback_worker.stop_playing
-      )
 
       self.playback_worker.finished.connect(self.update_ui_state)
       self.playback_worker.started.connect(self.worker_started)
       self.playback_worker.progress.connect(self.update_status)
-
 
       self.playback_thread.start()
 
@@ -183,6 +178,7 @@ class MainWindow(Widget.QMainWindow):
          self.playback_worker.request_play_script.emit(index)
       else:
          self.playback_worker.request_play_single_click.emit()
+      self.update_ui_state()
 
    @Core.Slot(Core.QItemSelection, Core.QItemSelection)
    def selection_changed(self, selected, deselected):
@@ -245,8 +241,8 @@ class MainWindow(Widget.QMainWindow):
    def handle_hotkey(self, action: str):
       if action == 'stop_playback':
          if self.playback_worker.is_playing:
-            self.playback_worker.request_stop.emit()
-            # self.playback_worker.stop_playing()  # Temporary direct call
+            # self.playback_worker.request_stop.emit()
+            self.playback_worker.stop_playing()  # Temporary direct call
          else:
             print("⚠️ No playback in progress to stop")
 
