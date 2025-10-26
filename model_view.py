@@ -34,7 +34,9 @@ class CustomModel(Core.QAbstractListModel):
    def get_script_events(self, index):
       if 0 <= index < len(self.script_data):
          selected_script = self.script_data[index]
-         return next(iter(selected_script.values()))
+         script_events = next(iter(selected_script.values()))
+         sorted_events = sorted(script_events, key=lambda x: x.get('time', 0))
+         return sorted_events
       return None
    
    def _load_script_data(self) -> list:
@@ -109,4 +111,4 @@ class CustomModel(Core.QAbstractListModel):
          return Qt.NoItemFlags
       return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
    
-
+list_model = CustomModel()

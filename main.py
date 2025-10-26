@@ -8,8 +8,9 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QPalette, QColor
 from PySide6.QtWidgets import QApplication, QStyle
 from pyside6_ui.monday import Ui_MainWindow
-from model_view import CustomModel, CustomListView
+from model_view import list_model, CustomListView
 from recorder_player import ScriptRecorder, PlaybackWorker
+from global_hotkey import HotkeyManager
 from config_manager import config
 
 MAX_SCRIPTS = config.max_scripts
@@ -32,14 +33,14 @@ class MainWindow(Widget.QMainWindow):
       
    def _init_variables(self):
       self.script_recorder = ScriptRecorder()
-      self.list_model = CustomModel()
+      self.hotkey_manager = HotkeyManager()
 
    def _setup_ui_references(self):
       self.record_btn = self.ui.record_btn
       self.delete_btn = self.ui.delete_btn
       self.play_btn = self.ui.start_btn
       self.list_view = self.ui.listView
-      self.list_view.setModel(self.list_model)
+      self.list_view.setModel(list_model)
       self.script_checkbox = self.ui.enable_script_checkbox
       self.script_container = self.ui.script_container
       self.click_container = self.ui.click_container
@@ -54,9 +55,10 @@ class MainWindow(Widget.QMainWindow):
       self.script_container.setEnabled(config.script_enabled)
       self.script_checkbox.setChecked(config.script_enabled)
       self.click_container.setEnabled(not config.script_enabled)
+      self.record_btn.setEnabled(MAX_SCRIPTS > list_model.rowCount())
 
       if config.script_enabled:
-         self.list_view.setCurrentIndex(self.list_model.index(config.script_selected_index))
+         self.list_view.setCurrentIndex(list_model.index(config.script_selected_index))
       
       self.stop_btn.setEnabled(False)
       self.play_btn.setEnabled(not config.script_enabled or config.script_selected_index != -1)
@@ -83,10 +85,16 @@ class MainWindow(Widget.QMainWindow):
          (self.clicktype_cbbox.currentIndexChanged, self.clicktype_change),
          (self.script_checkbox.toggled, self.script_toggled),
          (self.repeat_x_times_radio.toggled, self.repeat_ltd_toggled),
-         (self.repeat_x_times_input.valueChanged, self.repeat_change),
+         (self.repeat_x_times_input.valueChanged, self.repeat_change)
       ]
 
-      for signal, slot in playback_signals + config_signals:
+      hotkey_signals = [
+         (self.hotkey_manager.hotkey_triggered, self.handle_hotkey),
+         (self.playback_worker.progress, self.update_status),
+         # (self.playback_worker.request_stop, self.playback_worker.stop_playing)
+      ]
+
+      for signal, slot in playback_signals + config_signals + hotkey_signals:
          signal.connect(slot)
 
    def _init_threading(self):
@@ -94,9 +102,14 @@ class MainWindow(Widget.QMainWindow):
       self.playback_worker = PlaybackWorker()
       self.playback_worker.moveToThread(self.playback_thread)
 
+      self.playback_worker.request_stop.connect(
+         self.playback_worker.stop_playing
+      )
+
       self.playback_worker.finished.connect(self.update_ui_state)
       self.playback_worker.started.connect(self.worker_started)
       self.playback_worker.progress.connect(self.update_status)
+
 
       self.playback_thread.start()
 
@@ -104,11 +117,11 @@ class MainWindow(Widget.QMainWindow):
       self.script_container.setEnabled(config.script_enabled)
       self.click_container.setEnabled(not config.script_enabled)
 
-      row_count = self.list_model.rowCount()
+      row_count = list_model.rowCount()
       has_selection = config.script_selected_index != -1
 
       if config.script_enabled and has_selection:
-         self.list_view.setCurrentIndex(self.list_model.index(config.script_selected_index))
+         self.list_view.setCurrentIndex(list_model.index(config.script_selected_index))
       else:
          self.list_view.clearSelection()
 
@@ -134,14 +147,14 @@ class MainWindow(Widget.QMainWindow):
    def record_btn_clicked(self):
       # NOW START Recording
       if self.script_recorder.is_recording == False:
-         if self.list_model.rowCount() >= MAX_SCRIPTS: return
+         if list_model.rowCount() >= MAX_SCRIPTS: return
          self.script_recorder.start_listening()
       else:
          self.script_recorder.stop_listening()
-         self.list_model.add_script(self.script_recorder.record_buffer)
+         list_model.add_script(self.script_recorder.record_buffer)
 
          # Select the last index (newly added script)
-         config.script_selected_index = self.list_model.rowCount() - 1
+         config.script_selected_index = list_model.rowCount() - 1
 
       self.update_ui_state()
 
@@ -151,8 +164,8 @@ class MainWindow(Widget.QMainWindow):
       if not current_index.isValid(): return
 
       current_row = current_index.row()
-      self.list_model.remove_script(current_row)
-      new_row_count = self.list_model.rowCount()
+      list_model.remove_script(current_row)
+      new_row_count = list_model.rowCount()
       
       if new_row_count > 0:
          config.script_selected_index = min(current_row, new_row_count - 1)
@@ -167,8 +180,7 @@ class MainWindow(Widget.QMainWindow):
          index = config.script_selected_index
          if index == -1: 
             return
-         script_events = self.list_model.get_script_events(index)
-         self.playback_worker.request_play_script.emit(script_events)
+         self.playback_worker.request_play_script.emit(index)
       else:
          self.playback_worker.request_play_single_click.emit()
 
@@ -184,7 +196,7 @@ class MainWindow(Widget.QMainWindow):
 
    @Core.Slot()
    def stop_btn_clicked(self):
-      self.playback_worker.stop()
+      self.playback_worker.stop_playing()
 
    # =============== CONFIG INPUTS ===============
    @Core.Slot(int)
@@ -223,10 +235,20 @@ class MainWindow(Widget.QMainWindow):
 
    # Close app cleanup
    def closeEvent(self, event):
-      self.playback_worker.stop()
+      self.playback_worker.stop_playing()
       self.playback_thread.quit()
       self.playback_thread.wait(1000)
       event.accept()
+
+   # =============== HOTKEY ACTION ===============
+   @Core.Slot(str)
+   def handle_hotkey(self, action: str):
+      if action == 'stop_playback':
+         if self.playback_worker.is_playing:
+            self.playback_worker.request_stop.emit()
+            # self.playback_worker.stop_playing()  # Temporary direct call
+         else:
+            print("⚠️ No playback in progress to stop")
 
 if __name__ == "__main__":
    app = Widget.QApplication(sys.argv)
