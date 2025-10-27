@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'monday.ui'
+## Form generated from reading UI file 'mainwindow.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.2
 ##
@@ -33,21 +33,6 @@ class Ui_MainWindow(object):
         MainWindow.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
         MainWindow.setAnimated(True)
         MainWindow.setDocumentMode(False)
-        self.actionHotkey = QAction(MainWindow)
-        self.actionHotkey.setObjectName(u"actionHotkey")
-        self.actionDelay = QAction(MainWindow)
-        self.actionDelay.setObjectName(u"actionDelay")
-        self.actionDelay.setCheckable(True)
-        self.actionMouse_Move = QAction(MainWindow)
-        self.actionMouse_Move.setObjectName(u"actionMouse_Move")
-        self.actionMouse_Move.setCheckable(True)
-        self.actionPlay_Mouse_Move = QAction(MainWindow)
-        self.actionPlay_Mouse_Move.setObjectName(u"actionPlay_Mouse_Move")
-        self.actionPlay_Mouse_Move.setCheckable(True)
-        self.actionPlay_Mouse_Move.setChecked(True)
-        self.actionSpeed = QAction(MainWindow)
-        self.actionSpeed.setObjectName(u"actionSpeed")
-        self.actionSpeed.setCheckable(False)
         self.actionPl_ayback_config = QAction(MainWindow)
         self.actionPl_ayback_config.setObjectName(u"actionPl_ayback_config")
         self.centralwidget = QWidget(MainWindow)
@@ -265,16 +250,15 @@ class Ui_MainWindow(object):
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
         self.menubar.setGeometry(QRect(0, 0, 378, 22))
-        self.menusettins = QMenu(self.menubar)
-        self.menusettins.setObjectName(u"menusettins")
+        self.menusettings = QMenu(self.menubar)
+        self.menusettings.setObjectName(u"menusettings")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QStatusBar(MainWindow)
         self.statusbar.setObjectName(u"statusbar")
         MainWindow.setStatusBar(self.statusbar)
 
-        self.menubar.addAction(self.menusettins.menuAction())
-        self.menusettins.addAction(self.actionHotkey)
-        self.menusettins.addAction(self.actionPl_ayback_config)
+        self.menubar.addAction(self.menusettings.menuAction())
+        self.menusettings.addAction(self.actionPl_ayback_config)
 
         self.retranslateUi(MainWindow)
 
@@ -288,11 +272,6 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
-        self.actionHotkey.setText(QCoreApplication.translate("MainWindow", u"Hotk&ey config", None))
-        self.actionDelay.setText(QCoreApplication.translate("MainWindow", u"&Delay", None))
-        self.actionMouse_Move.setText(QCoreApplication.translate("MainWindow", u"&Mouse Move", None))
-        self.actionPlay_Mouse_Move.setText(QCoreApplication.translate("MainWindow", u"Play &Mouse Move", None))
-        self.actionSpeed.setText(QCoreApplication.translate("MainWindow", u"&Speed", None))
         self.actionPl_ayback_config.setText(QCoreApplication.translate("MainWindow", u"Pl&ayback config", None))
         self.label_3.setText(QCoreApplication.translate("MainWindow", u"times", None))
         self.repeat_label.setText(QCoreApplication.translate("MainWindow", u"Repeat", None))
@@ -314,6 +293,6 @@ class Ui_MainWindow(object):
 
         self.clicktype_label.setText(QCoreApplication.translate("MainWindow", u"Click type", None))
         self.stop_btn.setText(QCoreApplication.translate("MainWindow", u"Stop", None))
-        self.menusettins.setTitle(QCoreApplication.translate("MainWindow", u"&Settings", None))
+        self.menusettings.setTitle(QCoreApplication.translate("MainWindow", u"&Settings", None))
     # retranslateUi
 

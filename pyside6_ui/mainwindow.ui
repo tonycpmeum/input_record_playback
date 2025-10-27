@@ -461,56 +461,15 @@
      <height>22</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menusettins">
+   <widget class="QMenu" name="menusettings">
     <property name="title">
      <string>&amp;Settings</string>
     </property>
-    <addaction name="actionHotkey"/>
     <addaction name="actionPl_ayback_config"/>
    </widget>
-   <addaction name="menusettins"/>
+   <addaction name="menusettings"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionHotkey">
-   <property name="text">
-    <string>Hotk&amp;ey config</string>
-   </property>
-  </action>
-  <action name="actionDelay">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>&amp;Delay</string>
-   </property>
-  </action>
-  <action name="actionMouse_Move">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>&amp;Mouse Move</string>
-   </property>
-  </action>
-  <action name="actionPlay_Mouse_Move">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Play &amp;Mouse Move</string>
-   </property>
-  </action>
-  <action name="actionSpeed">
-   <property name="checkable">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>&amp;Speed</string>
-   </property>
-  </action>
   <action name="actionPl_ayback_config">
    <property name="text">
     <string>Pl&amp;ayback config</string>

@@ -7,7 +7,7 @@ from PySide6 import QtCore    as Core
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPalette, QColor
 from PySide6.QtWidgets import QApplication, QStyle
-from pyside6_ui.monday import Ui_MainWindow
+from pyside6_ui.mainwindow_ui import Ui_MainWindow
 from model_view import list_model, CustomListView
 from recorder_player import ScriptRecorder, ScriptPlayer
 from global_hotkey import HotkeyManager
@@ -22,7 +22,7 @@ class MainWindow(Widget.QMainWindow):
       self.ui.setupUi(self)
       self.setFixedSize(self.size())
       self.setWindowTitle("AutoClicker")
-      # QApplication.setStyle("Fusion")
+      QApplication.setStyle("Fusion")
       self.setWindowOpacity(0.95)
 
       self._init_variables()
@@ -146,7 +146,6 @@ class MainWindow(Widget.QMainWindow):
       else:
          self.script_recorder.stop_listening()
          list_model.add_script(self.script_recorder.record_buffer)
-
          # Select the last index (newly added script)
          config.script_selected_index = list_model.rowCount() - 1
 
