@@ -164,24 +164,31 @@ class ScriptPlayer(QObject):
          while self.is_playing:
             self.mouse_controller.click(button, click_type)
             time.sleep(interval)
-
-      self.stop_playing()
-
+      self.stop_playing(False)
 
    def play_script(self, script_index):
+      selected_script = list_model.get_script_events(script_index)
+      if not selected_script:
+         print(f"Script {script_index} does not exist.")
+         return
+      
       self.is_playing = True
-      self.started.emit()
       self.progress.emit("Playing script...")
+      self.started.emit()
 
       if config.repeat_limited:
          for i in range(config.repeat_count):
-            self._execute_script_once(script_index)
+            self._execute_script_once(selected_script)
       else:
          while self.is_playing:
-            self._execute_script_once(script_index)
-      self.stop_playing()
+            self._execute_script_once(selected_script)
+      self.stop_playing(False)
 
-   def stop_playing(self):
+   def stop_playing(self, early_termination: bool):
+      if early_termination:
+         self.progress.emit("Playback terminated.")
+      else:
+         self.progress.emit("Playback ended.")
       self.finished.emit()
       self.is_playing = False
       
@@ -292,22 +299,21 @@ class ScriptPlayer(QObject):
          available_key_map = {k: v for k, v in special_key_map.items() if v is not None}
          return available_key_map.get(key_str, keyboard.KeyCode.from_vk(0))
   
-   def _execute_script_once(self, script_index):
-      script_to_play = list_model.get_script_events(script_index)
+   def _execute_script_once(self, script: list):
       start_time = time.monotonic()
-      total_events = len(script_to_play)
+      total_events = len(script)
 
       for i in range(total_events):
          if not self.is_playing: break
 
-         time_to_event = script_to_play[i].get('time', 0)
+         time_to_event = script[i].get('time', 0)
          event_time = start_time + time_to_event
 
          while event_time > time.monotonic():
             remaining_time = event_time - time.monotonic()
             time.sleep(remaining_time)
 
-         self._execute_event(script_to_play[i])
+         self._execute_event(script[i])
 
    def _execute_event(self, event: dict):
       event_type = event.get('type')

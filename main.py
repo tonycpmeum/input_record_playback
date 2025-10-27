@@ -89,8 +89,7 @@ class MainWindow(Widget.QMainWindow):
       ]
 
       hotkey_signals = [
-         (self.hotkey_manager.hotkey_triggered, self.handle_hotkey),
-         (self.playback_worker.progress, self.update_status),
+         (self.hotkey_manager.hotkey_triggered, self.handle_hotkey)
          # (self.playback_worker.request_stop, self.playback_worker.stop_playing)
       ]
 
@@ -192,7 +191,7 @@ class MainWindow(Widget.QMainWindow):
 
    @Core.Slot()
    def stop_btn_clicked(self):
-      self.playback_worker.stop_playing()
+      self.playback_worker.stop_playing(True)
 
    # =============== CONFIG INPUTS ===============
    @Core.Slot(int)
@@ -231,7 +230,6 @@ class MainWindow(Widget.QMainWindow):
 
    # Close app cleanup
    def closeEvent(self, event):
-      self.playback_worker.stop_playing()
       self.playback_thread.quit()
       self.playback_thread.wait(1000)
       event.accept()
@@ -239,12 +237,34 @@ class MainWindow(Widget.QMainWindow):
    # =============== HOTKEY ACTION ===============
    @Core.Slot(str)
    def handle_hotkey(self, action: str):
-      if action == 'stop_playback':
+      if action == 'stop_action':
          if self.playback_worker.is_playing:
-            # self.playback_worker.request_stop.emit()
-            self.playback_worker.stop_playing()  # Temporary direct call
-         else:
-            print("⚠️ No playback in progress to stop")
+            self.playback_worker.stop_playing(True)
+         if self.script_recorder.is_recording:
+            self.script_recorder.stop_listening()
+            list_model.add_script(self.script_recorder.record_buffer)
+            config.script_selected_index = list_model.rowCount() - 1
+      elif action == 'start_recording':
+         if self.script_recorder.is_recording == False:
+            if list_model.rowCount() >= MAX_SCRIPTS: return
+            self.script_recorder.start_listening()
+      elif action == 'toggle_click':
+         self.playback_worker.request_play_single_click.emit()
+      elif action.startswith('toggle_script'):
+        try:
+            script_num = int(action.replace('toggle_script_', ''))
+            self.playback_worker.request_play_script.emit(script_num - 1)
+        except ValueError:
+            print(ValueError)
+      self.update_ui_state()
+
+      # match action:
+      #    case 'stop_playback':
+      #       self.playback_worker.stop_playing()
+      #    case 'toggle_click':
+      #       self.playback_worker.request_play_single_click.emit()
+      #    case 'toggle_script_1':
+      #       self.playback_worker.request_play_script.emit(9)
 
 if __name__ == "__main__":
    app = Widget.QApplication(sys.argv)
