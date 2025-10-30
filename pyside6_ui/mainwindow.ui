@@ -465,12 +465,12 @@
     <property name="title">
      <string>&amp;Settings</string>
     </property>
-    <addaction name="actionPl_ayback_config"/>
+    <addaction name="playbackconfig_QAction"/>
    </widget>
    <addaction name="menusettings"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionPl_ayback_config">
+  <action name="playbackconfig_QAction">
    <property name="text">
     <string>Pl&amp;ayback config</string>
    </property>

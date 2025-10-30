@@ -2,6 +2,8 @@ import os
 import json
 from typing import Any
 
+VERSION = '1.1.1'
+
 class ConfigManager:
    _instance = None
    _data: dict[str, Any] = {}
@@ -14,8 +16,31 @@ class ConfigManager:
       return cls._instance
    
    def _load_config(self):
-      # time in seconds
+      directory = os.path.dirname(self.config_path)
+      if directory: os.makedirs(directory, exist_ok=True)
+
+      if os.path.exists(self.config_path) and os.path.getsize(self.config_path) > 0:
+         try:
+            with open(self.config_path, 'r') as f:
+               self._data = json.load(f)
+         except (json.JSONDecodeError, IOError) as e:
+            print(f"Error loading config, using defaults: {e}")
+            self._data = self.get_default_config()
+            self._save_data()
+      else:
+         self._data = self.get_default_config()
+         self._save_data()
+
+   def _save_data(self):
+      try:
+         with open(self.config_path, 'w') as f:
+            json.dump(self._data, f, indent=3)
+      except IOError as e:
+         print(f"Error saving config: {e}")
+
+   def get_default_config(self) -> dict:
       default_config = {
+         "version": f"{VERSION}",
          "max_scripts": 10,
          "click_settings": {
             "click_interval": 1.0,
@@ -32,33 +57,18 @@ class ConfigManager:
          },
          "recording_settings": {
             "sample_mouse_move_interval": 0.15,
+         },
+         "playback_settings": {
+            "playback_speed": 1.00,
          }
       }
-      
-      directory = os.path.dirname(self.config_path)
-      if directory: os.makedirs(directory, exist_ok=True)
-
-      if os.path.exists(self.config_path) and os.path.getsize(self.config_path) > 0:
-         try:
-            with open(self.config_path, 'r') as f:
-               self._data = json.load(f)
-         except (json.JSONDecodeError, IOError) as e:
-            print(f"Error loading config, using defaults: {e}")
-            self._data = default_config
-            self._save_data()
-      else:
-         self._data = default_config
-         self._save_data()
-
-   def _save_data(self):
-      try:
-         with open(self.config_path, 'w') as f:
-            json.dump(self._data, f, indent=3)
-      except IOError as e:
-         print(f"Error saving config: {e}")
-
+      return default_config
+   
    @property
    def max_scripts(self) -> int: 
+      if not self._data["max_scripts"]:
+         raise ValueError("Value not found. Re-initializing config with default values.")
+         self._load_config()
       return self._data["max_scripts"]
    @max_scripts.setter
    def max_scripts(self, value: int): 
@@ -126,7 +136,6 @@ class ConfigManager:
       self._save_data()
 
    # =============== RECORDING SETTINGS ===============
-
    @property
    def sample_mouse_move_interval(self) -> float: 
       return self._data["recording_settings"]["sample_mouse_move_interval"]
@@ -134,5 +143,15 @@ class ConfigManager:
    def sample_mouse_move_interval(self, value: float): 
       self._data["recording_settings"]["sample_mouse_move_interval"] = value
       self._save_data()
+
+   # =============== PLAYBACK SETTINGS ===============
+   @property
+   def playback_speed(self) -> float: 
+      return self._data["playback_settings"]["playback_speed"]
+   @playback_speed.setter
+   def playback_speed(self, value: float): 
+      self._data["playback_settings"]["playback_speed"] = value
+      self._save_data()
+
 
 config = ConfigManager()

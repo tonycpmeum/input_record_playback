@@ -307,7 +307,7 @@ class ScriptPlayer(QObject):
          if not self.is_playing: break
 
          time_to_event = script[i].get('time', 0)
-         event_time = start_time + time_to_event
+         event_time = start_time + time_to_event / config.playback_speed
 
          while event_time > time.monotonic():
             remaining_time = event_time - time.monotonic()

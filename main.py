@@ -6,12 +6,14 @@ from PySide6 import QtWidgets as Widget
 from PySide6 import QtCore    as Core
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPalette, QColor
-from PySide6.QtWidgets import QApplication, QStyle
+from PySide6.QtWidgets import QApplication, QStyle, QDialog
 from pyside6_ui.mainwindow_ui import Ui_MainWindow
+from pyside6_ui.playback_settings_dialog_ui import Ui_playback_settings_dialog
 from model_view import list_model, CustomListView
 from recorder_player import ScriptRecorder, ScriptPlayer
 from global_hotkey import HotkeyManager
 from config_manager import config
+from dialog import PlaybackSettingsDialog
 
 MAX_SCRIPTS = config.max_scripts
 
@@ -23,14 +25,16 @@ class MainWindow(Widget.QMainWindow):
       self.setFixedSize(self.size())
       self.setWindowTitle("AutoClicker")
       QApplication.setStyle("Fusion")
-      self.setWindowOpacity(0.95)
 
       self._init_variables()
       self._setup_ui_references()
       self._init_threading()
       self._init_ui_state()
       self._connect_signals()
-      
+
+      self.settingsdialog = PlaybackSettingsDialog()
+      self.ui.playbackconfig_QAction.triggered.connect(lambda: self.settingsdialog.open())
+
    def _init_variables(self):
       self.script_recorder = ScriptRecorder()
       self.hotkey_manager = HotkeyManager()
@@ -71,15 +75,15 @@ class MainWindow(Widget.QMainWindow):
       self.mousebutton_cbbox.blockSignals(False)
 
    def _connect_signals(self):
-      playback_signals = [
+      button_signals = [
          (self.record_btn.clicked, self.record_btn_clicked),
          (self.delete_btn.clicked, self.del_btn_clicked),
          (self.play_btn.clicked, self.play_btn_clicked),
          (self.stop_btn.clicked, self.stop_btn_clicked),
-         (self.list_view.selectionModel().selectionChanged, self.selection_changed),
       ]
 
       config_signals = [
+         (self.list_view.selectionModel().selectionChanged, self.selection_changed),
          (self.interval_input_ms.valueChanged, self.interval_change),
          (self.mousebutton_cbbox.currentTextChanged, self.mousebutton_change),
          (self.clicktype_cbbox.currentIndexChanged, self.clicktype_change),
@@ -90,10 +94,9 @@ class MainWindow(Widget.QMainWindow):
 
       hotkey_signals = [
          (self.hotkey_manager.hotkey_triggered, self.handle_hotkey)
-         # (self.playback_worker.request_stop, self.playback_worker.stop_playing)
       ]
 
-      for signal, slot in playback_signals + config_signals + hotkey_signals:
+      for signal, slot in button_signals + config_signals + hotkey_signals:
          signal.connect(slot)
 
    def _init_threading(self):

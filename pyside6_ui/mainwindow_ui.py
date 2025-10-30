@@ -33,8 +33,8 @@ class Ui_MainWindow(object):
         MainWindow.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
         MainWindow.setAnimated(True)
         MainWindow.setDocumentMode(False)
-        self.actionPl_ayback_config = QAction(MainWindow)
-        self.actionPl_ayback_config.setObjectName(u"actionPl_ayback_config")
+        self.playbackconfig_QAction = QAction(MainWindow)
+        self.playbackconfig_QAction.setObjectName(u"playbackconfig_QAction")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.centralwidget.setEnabled(True)
@@ -258,7 +258,7 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
 
         self.menubar.addAction(self.menusettings.menuAction())
-        self.menusettings.addAction(self.actionPl_ayback_config)
+        self.menusettings.addAction(self.playbackconfig_QAction)
 
         self.retranslateUi(MainWindow)
 
@@ -272,7 +272,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
-        self.actionPl_ayback_config.setText(QCoreApplication.translate("MainWindow", u"Pl&ayback config", None))
+        self.playbackconfig_QAction.setText(QCoreApplication.translate("MainWindow", u"Pl&ayback config", None))
         self.label_3.setText(QCoreApplication.translate("MainWindow", u"times", None))
         self.repeat_label.setText(QCoreApplication.translate("MainWindow", u"Repeat", None))
         self.repeat_stop_radio.setText(QCoreApplication.translate("MainWindow", u"Repeat until stopped", None))
