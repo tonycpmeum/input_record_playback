@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>378</width>
-    <height>393</height>
+    <height>332</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -125,9 +125,9 @@
     <property name="geometry">
      <rect>
       <x>190</x>
-      <y>240</y>
-      <width>161</width>
-      <height>41</height>
+      <y>220</y>
+      <width>81</width>
+      <height>51</height>
      </rect>
     </property>
     <property name="text">
@@ -156,7 +156,7 @@
       <x>20</x>
       <y>10</y>
       <width>151</width>
-      <height>361</height>
+      <height>281</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout">
@@ -193,7 +193,7 @@
           <x>0</x>
           <y>0</y>
           <width>149</width>
-          <height>281</height>
+          <height>231</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="script_func_group">
@@ -258,7 +258,7 @@
     <property name="geometry">
      <rect>
       <x>180</x>
-      <y>100</y>
+      <y>90</y>
       <width>191</width>
       <height>111</height>
      </rect>
@@ -438,10 +438,10 @@
    <widget class="QPushButton" name="stop_btn">
     <property name="geometry">
      <rect>
-      <x>190</x>
-      <y>290</y>
-      <width>161</width>
-      <height>41</height>
+      <x>280</x>
+      <y>220</y>
+      <width>71</width>
+      <height>51</height>
      </rect>
     </property>
     <property name="text">
