@@ -1,8 +1,9 @@
 import json
-import os
+from platformdirs import user_config_path
 from PySide6 import QtWidgets as Widget
 from PySide6 import QtCore    as Core
 from PySide6.QtCore import Qt
+from config_manager import DATA_DIR
 
 class CustomListView(Widget.QListView):
    def __init__(self, parent=None):
@@ -12,7 +13,7 @@ class CustomListView(Widget.QListView):
 class CustomModel(Core.QAbstractListModel):
    def __init__(self):
       super().__init__()
-      self.file_path = "./data/script_data.json"
+      self.script_file = DATA_DIR / "script_data.json"
       self.script_data = self._load_script_data()
 
    @Core.Slot(list)
@@ -40,31 +41,24 @@ class CustomModel(Core.QAbstractListModel):
       return None
    
    def _load_script_data(self) -> list:
-      directory = os.path.dirname(self.file_path)
-      if directory: 
-         os.makedirs(directory, exist_ok=True)
+      self.script_file.parent.mkdir(parents=True, exist_ok=True)
 
-      if not os.path.exists(self.file_path) or os.path.getsize(self.file_path) == 0:
-         with open(self.file_path, 'w') as f:
-            json.dump([], f)
+      if not self.script_file.exists():
+         self.script_file.write_text("[]")
+
+      if self.script_file.stat().st_size == 0:
          return []
       
       try: 
-         with open(self.file_path, 'r') as f:
-            return json.load(f)
-      except json.JSONDecodeError:
-         # Handle case where JSON is invalid/corrupted
+         return json.loads(self.script_file.read_text())
+      except OSError:
          print("Warning: Invalid JSON in script file. Initializing with empty data.")
-         with open(self.file_path, 'w') as f:
-            json.dump([], f)
+         self.script_file.write_text("[]")
          return []
       
    def _save_script_data(self):
-      directory = os.path.dirname(self.file_path)
-      if directory:
-         os.makedirs(directory, exist_ok=True)
-      with open(self.file_path, 'w') as f:
-         json.dump(self.script_data, f, indent=3)
+      self.script_file.parent.mkdir(parents=True, exist_ok=True)
+      self.script_file.write_text(json.dumps(self.script_data, indent=3))
 
    # =============== Required QAbstractItemModel Methods =============== #
    def rowCount(self, parent=Core.QModelIndex()) -> int:
@@ -98,9 +92,7 @@ class CustomModel(Core.QAbstractListModel):
          data_name_old = next(iter(data_obj))
          data_obj[value] = data_obj.pop(data_name_old)
 
-         with open (self.file_path, 'w') as f:
-            json.dump(self.script_data, f, indent=3)
-         
+         self.script_file.write_text(json.dumps(self.script_data, indent=3))
          self.dataChanged.emit(index, index)
          return True
 

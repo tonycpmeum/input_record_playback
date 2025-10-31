@@ -12,7 +12,7 @@ from pyside6_ui.playback_settings_dialog_ui import Ui_playback_settings_dialog
 from model_view import list_model, CustomListView
 from recorder_player import ScriptRecorder, ScriptPlayer
 from global_hotkey import HotkeyManager
-from config_manager import config
+from config_manager import config, APP_NAME
 from dialog import PlaybackSettingsDialog
 
 MAX_SCRIPTS = config.max_scripts
@@ -23,7 +23,7 @@ class MainWindow(Widget.QMainWindow):
       self.ui = Ui_MainWindow()
       self.ui.setupUi(self)
       self.setFixedSize(self.size())
-      self.setWindowTitle("AutoClicker")
+      self.setWindowTitle(APP_NAME)
       QApplication.setStyle("Fusion")
 
       self._init_variables()

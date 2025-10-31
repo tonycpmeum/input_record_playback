@@ -1,13 +1,15 @@
-import os
 import json
 from typing import Any
+from platformdirs import user_config_path
 
+APP_NAME = "Slay Clicker"
 VERSION = '0.0.1'
+DATA_DIR = user_config_path(APP_NAME, appauthor=False) / "data"
 
 class ConfigManager:
    _instance = None
    _data: dict[str, Any] = {}
-   config_path = "./data/config.json"
+   config_file = DATA_DIR / "config.json"
 
    def __new__(cls):
       if cls._instance is None:
@@ -16,25 +18,18 @@ class ConfigManager:
       return cls._instance
    
    def _load_config(self):
-      directory = os.path.dirname(self.config_path)
-      if directory: os.makedirs(directory, exist_ok=True)
-
-      if os.path.exists(self.config_path) and os.path.getsize(self.config_path) > 0:
-         try:
-            with open(self.config_path, 'r') as f:
-               self._data = json.load(f)
-               if self._data["version"] != VERSION:
-                  self.reinit_config_default()
-         except (json.JSONDecodeError, IOError) as e:
-            print(f"Error loading config, using defaults: {e}")
+      self.config_file.parent.mkdir(parents=True, exist_ok=True)
+      try:
+         self._data = json.loads(self.config_file.read_text())
+         if self._data.get("version") != VERSION:
             self.reinit_config_default()
-      else:
+      except OSError as e:
+         print(f"Error loading config, using defaults: {e}")
          self.reinit_config_default()
 
    def _save_data(self):
       try:
-         with open(self.config_path, 'w') as f:
-            json.dump(self._data, f, indent=3)
+         self.config_file.write_text(json.dumps(self._data, indent=3))
       except IOError as e:
          print(f"Error saving config: {e}")
 
@@ -203,6 +198,5 @@ class ConfigManager:
    def playback_speed(self, value: float): 
       self._data["playback_settings"]["playback_speed"] = value
       self._save_data()
-
 
 config = ConfigManager()
