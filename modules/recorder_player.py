@@ -2,8 +2,8 @@ import time
 from pynput import mouse, keyboard
 from PySide6.QtCore import QObject, Signal, QTimer
 from PySide6 import QtCore as Core
-from config_manager import config
-from model_view import list_model
+from modules.config_manager import config
+from modules.model_view import list_model
 
 class ScriptRecorder:
    def __init__(self):

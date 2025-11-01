@@ -3,7 +3,7 @@ from platformdirs import user_config_path
 from PySide6 import QtWidgets as Widget
 from PySide6 import QtCore    as Core
 from PySide6.QtCore import Qt
-from config_manager import DATA_DIR
+from modules.config_manager import DATA_DIR
 
 class CustomListView(Widget.QListView):
    def __init__(self, parent=None):

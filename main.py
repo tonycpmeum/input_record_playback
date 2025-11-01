@@ -1,19 +1,16 @@
 import sys
-import json
-import time
-import os
 from PySide6 import QtWidgets as Widget
 from PySide6 import QtCore    as Core
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QPalette, QColor
+from PySide6.QtGui import QPalette, QColor, QIcon
 from PySide6.QtWidgets import QApplication, QStyle, QDialog
 from pyside6_ui.mainwindow_ui import Ui_MainWindow
 from pyside6_ui.playback_settings_dialog_ui import Ui_playback_settings_dialog
-from model_view import list_model, CustomListView
-from recorder_player import ScriptRecorder, ScriptPlayer
-from global_hotkey import HotkeyManager
-from config_manager import config, APP_NAME
-from dialog import PlaybackSettingsDialog
+from modules.model_view import list_model, CustomListView
+from modules.recorder_player import ScriptRecorder, ScriptPlayer
+from modules.global_hotkey import HotkeyManager
+from modules.config_manager import config, APP_NAME, get_Qicon
+from modules.dialog import PlaybackSettingsDialog
 
 MAX_SCRIPTS = config.max_scripts
 
@@ -25,6 +22,7 @@ class MainWindow(Widget.QMainWindow):
       self.setFixedSize(self.size())
       self.setWindowTitle(APP_NAME)
       QApplication.setStyle("Fusion")
+      self.setWindowIcon(get_Qicon("app-icon.png"))
 
       self._init_variables()
       self._setup_ui_references()

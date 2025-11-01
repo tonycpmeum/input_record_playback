@@ -22,14 +22,14 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QFrame,
     QSizePolicy, QSpinBox, QStatusBar, QVBoxLayout,
     QWidget)
 
-from model_view import CustomListView
+from modules.model_view import CustomListView
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
         MainWindow.setEnabled(True)
-        MainWindow.resize(378, 332)
+        MainWindow.resize(378, 387)
         MainWindow.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
         MainWindow.setAnimated(True)
         MainWindow.setDocumentMode(False)
@@ -93,7 +93,7 @@ class Ui_MainWindow(object):
 
         self.start_btn = QPushButton(self.centralwidget)
         self.start_btn.setObjectName(u"start_btn")
-        self.start_btn.setGeometry(QRect(190, 220, 81, 51))
+        self.start_btn.setGeometry(QRect(200, 230, 151, 51))
         self.line_3 = QFrame(self.centralwidget)
         self.line_3.setObjectName(u"line_3")
         self.line_3.setGeometry(QRect(230, 10, 111, 31))
@@ -101,7 +101,7 @@ class Ui_MainWindow(object):
         self.line_3.setFrameShadow(QFrame.Shadow.Sunken)
         self.verticalLayoutWidget_2 = QWidget(self.centralwidget)
         self.verticalLayoutWidget_2.setObjectName(u"verticalLayoutWidget_2")
-        self.verticalLayoutWidget_2.setGeometry(QRect(20, 10, 151, 281))
+        self.verticalLayoutWidget_2.setGeometry(QRect(20, 10, 151, 331))
         self.verticalLayout = QVBoxLayout(self.verticalLayoutWidget_2)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
@@ -122,7 +122,7 @@ class Ui_MainWindow(object):
         self.script_container.setMaximumSize(QSize(16777215, 16777215))
         self.layoutWidget = QWidget(self.script_container)
         self.layoutWidget.setObjectName(u"layoutWidget")
-        self.layoutWidget.setGeometry(QRect(0, 0, 149, 231))
+        self.layoutWidget.setGeometry(QRect(0, 0, 149, 281))
         self.script_func_group = QVBoxLayout(self.layoutWidget)
         self.script_func_group.setSpacing(7)
         self.script_func_group.setObjectName(u"script_func_group")
@@ -245,7 +245,7 @@ class Ui_MainWindow(object):
 
         self.stop_btn = QPushButton(self.centralwidget)
         self.stop_btn.setObjectName(u"stop_btn")
-        self.stop_btn.setGeometry(QRect(280, 220, 71, 51))
+        self.stop_btn.setGeometry(QRect(200, 290, 151, 31))
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
