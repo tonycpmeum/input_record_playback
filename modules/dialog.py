@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QDialog
-from modules.config_manager import config, get_Qicon
+from PySide6.QtGui import QIcon
+from modules.config_manager import config, get_icon_path
 from pyside6_ui.playback_settings_dialog_ui import Ui_playback_settings_dialog
 
 class PlaybackSettingsDialog(QDialog):
@@ -10,7 +11,7 @@ class PlaybackSettingsDialog(QDialog):
       
       self.setWindowTitle("Playback settings")
       self.setFixedSize(self.size())
-      self.setWindowIcon(get_Qicon("settings-icon.png"))
+      self.setWindowIcon(QIcon(get_icon_path("settings-icon.png")))
 
       self.speed_spinbox = self.ui.speed_spinbox
       self.speed_spinbox.setValue(config.playback_speed)

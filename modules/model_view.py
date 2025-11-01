@@ -1,5 +1,4 @@
 import json
-from platformdirs import user_config_path
 from PySide6 import QtWidgets as Widget
 from PySide6 import QtCore    as Core
 from PySide6.QtCore import Qt

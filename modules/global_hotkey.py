@@ -1,4 +1,4 @@
-from pynput.keyboard import Key, KeyCode, GlobalHotKeys
+from pynput.keyboard import GlobalHotKeys
 from PySide6.QtCore import Signal, QObject
 
 class HotkeyManager(QObject):

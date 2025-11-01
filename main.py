@@ -1,16 +1,15 @@
 import sys
 from PySide6 import QtWidgets as Widget
 from PySide6 import QtCore    as Core
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QPalette, QColor, QIcon
-from PySide6.QtWidgets import QApplication, QStyle, QDialog
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QApplication
 from pyside6_ui.mainwindow_ui import Ui_MainWindow
-from pyside6_ui.playback_settings_dialog_ui import Ui_playback_settings_dialog
-from modules.model_view import list_model, CustomListView
+from modules.model_view import list_model
 from modules.recorder_player import ScriptRecorder, ScriptPlayer
 from modules.global_hotkey import HotkeyManager
-from modules.config_manager import config, APP_NAME, get_Qicon
+from modules.config_manager import config, APP_NAME, get_icon_path
 from modules.dialog import PlaybackSettingsDialog
+from modules.notification import notife
 
 MAX_SCRIPTS = config.max_scripts
 
@@ -22,7 +21,7 @@ class MainWindow(Widget.QMainWindow):
       self.setFixedSize(self.size())
       self.setWindowTitle(APP_NAME)
       QApplication.setStyle("Fusion")
-      self.setWindowIcon(get_Qicon("app-icon.png"))
+      self.setWindowIcon(QIcon(get_icon_path("app-icon.png")))
 
       self._init_variables()
       self._setup_ui_references()
@@ -221,8 +220,9 @@ class MainWindow(Widget.QMainWindow):
 
    # =============== THREAD SLOTS & FUNC ===============
    @Core.Slot(str)
-   def update_status(self, message: str):
-      print(f"{message}")
+   def update_status(self, message: list[str]):
+      # notife(message, APP_NAME, get_icon_path('app-icon.ico'))
+      pass
 
    @Core.Slot()
    def worker_started(self):

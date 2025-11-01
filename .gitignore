@@ -1,5 +1,6 @@
 dist/
 build/
+run.ps1
 
 # Virtual environments
 venv/

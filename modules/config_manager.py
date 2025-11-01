@@ -2,22 +2,20 @@ import json
 import sys
 from pathlib import Path
 from typing import Any
-from PySide6.QtGui import QIcon
 from platformdirs import user_config_path
 
 APP_NAME = "Slay Clicker"
 VERSION = '0.0.1'
 DATA_DIR = user_config_path(APP_NAME, appauthor=False) / "data"
 
-def get_Qicon(file_name: str) -> QIcon:
+def get_icon_path(file_name: str) -> str:
    if hasattr(sys, '_MEIPASS'):
       base_path = Path(sys._MEIPASS)
    else:
       base_path = Path.cwd()
    
    img_folder = base_path / "src" / "img"
-   path = str(img_folder / file_name)
-   return QIcon(path)
+   return str(img_folder / file_name)
 
 class ConfigManager:
    _instance = None

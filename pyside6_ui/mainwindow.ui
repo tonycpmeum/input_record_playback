@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>378</width>
-    <height>387</height>
+    <width>357</width>
+    <height>337</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -35,7 +35,7 @@
    <widget class="QWidget" name="gridLayoutWidget_2">
     <property name="geometry">
      <rect>
-      <x>190</x>
+      <x>170</x>
       <y>10</y>
       <width>181</width>
       <height>80</height>
@@ -124,9 +124,9 @@
    <widget class="QPushButton" name="start_btn">
     <property name="geometry">
      <rect>
-      <x>200</x>
-      <y>230</y>
-      <width>151</width>
+      <x>170</x>
+      <y>220</y>
+      <width>81</width>
       <height>51</height>
      </rect>
     </property>
@@ -140,7 +140,7 @@
    <widget class="Line" name="line_3">
     <property name="geometry">
      <rect>
-      <x>230</x>
+      <x>210</x>
       <y>10</y>
       <width>111</width>
       <height>31</height>
@@ -155,7 +155,7 @@
      <rect>
       <x>20</x>
       <y>10</y>
-      <width>151</width>
+      <width>131</width>
       <height>331</height>
      </rect>
     </property>
@@ -163,7 +163,7 @@
      <item>
       <widget class="QCheckBox" name="enable_script_checkbox">
        <property name="text">
-        <string>&amp;Enable Script Playback</string>
+        <string>Sc&amp;ript Playback</string>
        </property>
        <property name="autoRepeat">
         <bool>false</bool>
@@ -192,8 +192,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>149</width>
-          <height>281</height>
+          <width>121</width>
+          <height>241</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="script_func_group">
@@ -207,6 +207,12 @@
           <widget class="CustomListView" name="listView">
            <property name="enabled">
             <bool>true</bool>
+           </property>
+           <property name="cursor" stdset="0">
+            <cursorShape>ArrowCursor</cursorShape>
+           </property>
+           <property name="layoutDirection">
+            <enum>Qt::LayoutDirection::LeftToRight</enum>
            </property>
           </widget>
          </item>
@@ -257,7 +263,7 @@
    <widget class="QWidget" name="click_container" native="true">
     <property name="geometry">
      <rect>
-      <x>180</x>
+      <x>160</x>
       <y>90</y>
       <width>191</width>
       <height>111</height>
@@ -282,7 +288,7 @@
        <x>10</x>
        <y>10</y>
        <width>162</width>
-       <height>96</height>
+       <height>99</height>
       </rect>
      </property>
      <layout class="QGridLayout" name="click_grid">
@@ -438,10 +444,10 @@
    <widget class="QPushButton" name="stop_btn">
     <property name="geometry">
      <rect>
-      <x>200</x>
-      <y>290</y>
-      <width>151</width>
-      <height>31</height>
+      <x>260</x>
+      <y>220</y>
+      <width>71</width>
+      <height>51</height>
      </rect>
     </property>
     <property name="text">
@@ -457,7 +463,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>378</width>
+     <width>357</width>
      <height>22</height>
     </rect>
    </property>
@@ -480,7 +486,7 @@
   <customwidget>
    <class>CustomListView</class>
    <extends>QListView</extends>
-   <header>model_view</header>
+   <header>modules.model_view</header>
   </customwidget>
  </customwidgets>
  <resources/>

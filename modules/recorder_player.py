@@ -1,7 +1,6 @@
 import time
 from pynput import mouse, keyboard
-from PySide6.QtCore import QObject, Signal, QTimer
-from PySide6 import QtCore as Core
+from PySide6.QtCore import QObject, Signal
 from modules.config_manager import config
 from modules.model_view import list_model
 
@@ -127,7 +126,7 @@ class ScriptRecorder:
 class ScriptPlayer(QObject):
    started = Signal()
    finished = Signal()
-   progress = Signal(str)
+   progress = Signal(list)
 
    request_play_script = Signal(int)
    request_play_single_click = Signal()
@@ -146,7 +145,7 @@ class ScriptPlayer(QObject):
    def play_single_click(self):
       self.is_playing = True
       self.started.emit()
-      self.progress.emit("Single click mode...")
+      self.progress.emit(["Playing", "Single click mode..."])
 
       repeat_count = config.repeat_count
       button = self.convert_button_string(config.click_button)
@@ -164,7 +163,8 @@ class ScriptPlayer(QObject):
          while self.is_playing:
             self.mouse_controller.click(button, click_type)
             time.sleep(interval)
-      self.stop_playing(False)
+      if self.is_playing == True:
+         self.stop_playing(False)
 
    def play_script(self, script_index):
       selected_script = list_model.get_script_events(script_index)
@@ -173,7 +173,7 @@ class ScriptPlayer(QObject):
          return
       
       self.is_playing = True
-      self.progress.emit("Playing script...")
+      self.progress.emit(["Playing script...", ""])
       self.started.emit()
 
       if config.repeat_limited:
@@ -182,13 +182,14 @@ class ScriptPlayer(QObject):
       else:
          while self.is_playing:
             self._execute_script_once(selected_script)
-      self.stop_playing(False)
+      if self.is_playing == True:
+         self.stop_playing(False)
 
    def stop_playing(self, early_termination: bool):
       if early_termination:
-         self.progress.emit("Playback terminated.")
+         self.progress.emit(["Stopped", "Script terminated."])
       else:
-         self.progress.emit("Playback ended.")
+         self.progress.emit(["Stopped", "Script ended."])
       self.finished.emit()
       self.is_playing = False
       
