@@ -150,7 +150,7 @@ class ScriptPlayer(QObject):
       repeat_count = config.repeat_count
       button = self.convert_button_string(config.click_button)
       click_type = config.click_type
-      interval = config.click_interval
+      interval = config.click_interval_seconds
 
       if config.repeat_limited:
          for i in range(repeat_count):
