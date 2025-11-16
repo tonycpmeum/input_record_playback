@@ -65,6 +65,7 @@ class MainWindow(Widget.QMainWindow):
       self.play_btn.setEnabled(not config.script_enabled or config.script_selected_index != -1)
       self.repeat_x_times_radio.setChecked(config.repeat_limited)
       self.repeat_x_times_input.setValue(config.repeat_count)
+      self.interval_input_ms.setValue(config.click_interval_seconds * 1000)
 
       self.clicktype_cbbox.setCurrentIndex(config.click_type - 1)
       self.mousebutton_cbbox.blockSignals(True)
@@ -195,7 +196,7 @@ class MainWindow(Widget.QMainWindow):
    # =============== CONFIG INPUTS ===============
    @Core.Slot(int)
    def interval_change(self, milliseconds: int):
-      config.click_interval = milliseconds / 1000
+      config.click_interval_seconds = milliseconds / 1000
 
    @Core.Slot(str)
    def mousebutton_change(self, string: str):

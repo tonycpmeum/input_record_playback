@@ -53,7 +53,7 @@ class ConfigManager:
          "version": f"{VERSION}",
          "max_scripts": 10,
          "click_settings": {
-            "click_interval": 1.0,
+            "click_interval_seconds": 1.0,
             "click_button": "Button.left",
             "click_type": 1
          },
@@ -89,16 +89,16 @@ class ConfigManager:
 
    # =============== CLILCK SETTINGS ===============
    @property
-   def click_interval(self) -> float: 
+   def click_interval_seconds(self) -> float: 
       try:
-         return self._data['click_settings']["click_interval"]
+         return self._data['click_settings']["click_interval_seconds"]
       except KeyError as e:
          print(f"KeyError: {e}")
          self.reinit_config_default()
-         return self._data['click_settings']["click_interval"]
-   @click_interval.setter
-   def click_interval(self, value: float): 
-      self._data['click_settings']["click_interval"] = value
+         return self._data['click_settings']["click_interval_seconds"]
+   @click_interval_seconds.setter
+   def click_interval_seconds(self, value: float): 
+      self._data['click_settings']["click_interval_seconds"] = value
       self._save_data()
 
    @property
