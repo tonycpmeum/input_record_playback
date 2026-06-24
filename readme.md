@@ -1,7 +1,6 @@
 # Autoclicker with Script Recording
 
-A cross-platform autoclicker built with PySide6. (Hotkey config and notification not yet implemented.)
-
+A cross-platform autoclicker / input playback automation - built with PySide6.
 
 ## Setup
 
